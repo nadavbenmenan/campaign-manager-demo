@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הצלחה לפי מודעה — מערכת לניהול קמפיינים (נתוני דמה)</title>
+<link rel="icon" href="assets/icon.png">
+<style>:root {
+  --bg: #0f1729;
+  --panel: #1a2440;
+  --panel-soft: #141d33;
+  --line: #2a3550;
+  --line-soft: #26314e;
+  --ink: #e8edf5;
+  --ink-mid: #9fb3d4;
+  --ink-soft: #6f83a6;
+  --accent: #4F8EF7;
+  --accent-deep: #25406b;
+  --ok: #22c39a;
+  --warn: #FFC857;
+  --err: #f97362;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  direction: rtl;
+}
+
+/* ---------- פריסה: סרגל צד + תוכן ---------- */
+.layout { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 224px; flex: 0 0 224px; background: #111a2e;
+  border-inline-start: 1px solid var(--line); display: flex;
+  flex-direction: column; padding: 18px 13px;
+}
+.brand { display: flex; align-items: center; gap: 11px; padding: 0 5px 20px; }
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent), #2f6fd0);
+  display: grid; place-items: center; font-size: 19px; font-weight: 700; color: #fff;
+}
+.brand-text strong { font-size: 14.5px; display: block; color: #fff; }
+.brand-text span { font-size: 11px; color: #8ba0c4; }
+
+.side-nav { display: flex; flex-direction: column; gap: 5px; }
+.side-nav a {
+  display: flex; align-items: center; gap: 10px; padding: 11px 13px;
+  border-radius: 10px; font-size: 14px; color: #cbd5e1; text-decoration: none;
+  transition: .15s; border: 1px solid transparent;
+}
+.side-nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
+.side-nav a.on {
+  background: var(--accent-deep); color: #fff; font-weight: 600;
+  border-color: var(--accent);
+}
+.side-nav .ico { font-size: 15px; opacity: .85; width: 18px; text-align: center; }
+.side-foot {
+  margin-top: auto; padding: 16px 6px 0; font-size: 11px; color: var(--ink-soft);
+  line-height: 1.65; border-top: 1px solid rgba(255,255,255,.07);
+}
+/* חותמת הקוד — מכריעה במבט אם המסך שמולך הוא הקוד שעל הדיסק */
+.side-foot .build {
+  display: inline-block; margin-top: 7px; padding: 2px 7px; border-radius: 5px;
+  background: rgba(255,255,255,.06); font-variant-numeric: tabular-nums;
+  letter-spacing: .2px;
+}
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+/* ---------- כותרת ---------- */
+header {
+  background: linear-gradient(120deg, #1e293b, #0f1729);
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--line);
+}
+.head-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 18px; flex-wrap: wrap;
+}
+.head-main { display: flex; align-items: center; gap: 13px; }
+.head-mark {
+  width: 42px; height: 42px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent), #2f6fd0);
+  display: grid; place-items: center; font-size: 20px; font-weight: 700;
+  color: #fff; flex: 0 0 42px;
+}
+header h1 { margin: 0; font-size: 20px; }
+header .sub { color: #8ba0c4; font-size: 12px; margin-top: 3px; }
+.head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- לשוניות המסך ---------- */
+/* שבע הלשוניות בשורה אחת.
+
+   קודם לכן השורה הייתה flex-wrap: wrap ברוחב קבוע, ובמסך תקני
+   ב-100% הזום הלשונית האחרונה או השתיים האחרונות ירדו לשורה
+   שנייה — הן נראו כמו קבוצה נפרדת, ולא כמו המשך של אותה שורה.
+   עכשיו השורה אינה נשברת, והריווח והגופן נגזרים מרוחב החלון:
+   ככל שהוא צר יותר הם מתכווצים, עד לרצפה שבה הטקסט עוד קריא.
+   מתחת לרצפה הזו — מסך צר באמת — השורה נגללת לרוחב במקום
+   להישבר, ולכן היא נשארת שורה אחת תמיד. */
+.nav {
+  display: flex; gap: clamp(3px, .4vw, 8px); flex-wrap: nowrap;
+  padding: 13px 28px 0; overflow-x: auto; scrollbar-width: none;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nav a {
+  background: var(--panel); color: #cfe0f7; border: 1px solid #33436b;
+  border-radius: 12px 12px 0 0; padding: 10px clamp(8px, 1.05vw, 17px);
+  cursor: pointer; flex: 0 0 auto; white-space: nowrap;
+  font-family: inherit; font-size: clamp(11.5px, .76vw, 13.5px); font-weight: 600;
+  border-bottom: none; transition: .15s; text-decoration: none; display: inline-block;
+}
+.nav a:hover { background: #20304f; color: #fff; }
+.nav a.on { background: var(--accent-deep); color: #fff; border-color: var(--accent); }
+
+.wrap {
+  padding: 20px 28px 50px; margin: 0 auto; width: 100%;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- כותרת קמפיין ---------- */
+.camp-head { display: flex; flex-direction: column; gap: 5px; }
+.camp-head .ctitle { font-size: 21px; font-weight: 700; color: #fff; }
+.camp-head .csub { font-size: 13.5px; color: #8ba0c4; }
+.camp-head .cdates {
+  font-size: 12.5px; color: var(--accent); font-weight: 600;
+}
+.camp-head .cdesc {
+  font-size: 12.5px; color: var(--ink-mid); margin-top: 4px;
+  max-width: 720px; line-height: 1.6;
+}
+
+/* ---------- מגירת סינון ---------- */
+.drawer-toggle {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  background: var(--panel-soft); border: 1px solid var(--line-soft);
+  border-radius: 10px; padding: 9px 15px; font-size: 13px; font-weight: 600;
+  color: var(--ink-mid); user-select: none;
+}
+.drawer-toggle:hover { color: #fff; border-color: var(--accent); }
+.drawer-toggle .lines { display: inline-flex; flex-direction: column; gap: 3px; }
+.drawer-toggle .lines i {
+  display: block; width: 16px; height: 2px; background: currentColor; border-radius: 2px;
+}
+.drawer { display: none; margin-top: 12px; }
+.drawer.open { display: block; }
+
+/* ---------- מחוון תאריכים ---------- */
+.slider-box { display: flex; flex-direction: column; gap: 7px; flex: 1 1 320px; }
+.slider-row { display: flex; align-items: center; gap: 10px; }
+.slider-row input[type=range] {
+  flex: 1; accent-color: var(--accent); background: transparent;
+}
+.slider-val {
+  font-size: 12px; color: var(--ink-mid); font-variant-numeric: tabular-nums;
+  min-width: 82px; text-align: center;
+}
+
+/* ---------- מפת חום ---------- */
+.mapcard { padding: 13px 16px; }
+.mapsvg {
+  /* הרוחב והגובה נקבעים כתכונות על האלמנט עצמו ב-JS. כאן רק ההגבלה
+     למסך צר — SVG עם viewBox בלבד נמתח לרוחב המכל, וזה מה שניפח
+     את המפה. */
+  display: block; margin: 0 auto; max-width: 100%; height: auto;
+  /* צבע הים, כמו במפת החום. קודם היה כאן כחול כהה של הממשק, והוא
+     הציץ בפינות שאליהן מצולע הים אינו מגיע — פינות שחורות שקטעו
+     את המפה. עכשיו הרקע זהה למלבן שנצבע בתוך ה-SVG עצמו. */
+  background: #bcdcef; border-radius: 10px;
+}
+.mapview {
+  /* חלון תצוגה בגובה קבוע. המפה גדלה בתוכו עם ההגדלה, והגרירה
+     מזיזה אותה — כך שהגדלה אינה דוחפת את שאר העמוד מטה. */
+  overflow: auto; border-radius: 10px; background: #bcdcef;
+  cursor: grab; touch-action: none; scrollbar-width: thin;
+}
+.mapview.grabbing { cursor: grabbing; }
+.mapview .mapsvg {
+  /* בתוך החלון המפה נשארת בגודלה המלא ואינה מצטמצמת לרוחב המכל,
+     אחרת ההגדלה לא הייתה עושה דבר. */
+  max-width: none;
+}
+.maplegend {
+  display: flex; align-items: center; gap: 14px; margin-top: 10px;
+  flex-wrap: wrap; font-size: 11.5px; color: var(--ink-mid);
+}
+.maplegend .swatch {
+  display: inline-block; width: 13px; height: 13px; border-radius: 3px;
+  margin-inline-end: 5px; vertical-align: -2px;
+}
+/* הסבר הסולם יורד לשורה משלו מתחת לדגימות הצבע, ולא נדחס ביניהן */
+.maplegend .tnote { flex-basis: 100%; margin-top: 2px; }
+
+/* הפיצול שבתוך שם השלב — "רק מרכז הערכה: 512 (41%)".
+   קטן ואפור: הוא מבהיר את השורה ואינו מתחרה בה. */
+.substep { color: var(--ink-soft); font-size: 11px; font-weight: 400; }
+
+/* אותו ריבוע צבע גם בטבלת האזורים, ליד שם המחוז. שם הוא נושא את
+   מדד הייצוג לעמודה שתמיד גלויה — גם בטלפון, בלי לגלול לצד. */
+table.t td .swatch {
+  display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+  margin-inline-end: 7px; vertical-align: -2px;
+  border: 1px solid rgba(255, 255, 255, .18);
+}
+.maprow {
+  /* שתי מפות זו לצד זו, על כל רוחב המסך. גובה המפה נגזר מגובה
+     החלון, ולכן מסך רחב נותן מפה גדולה בלי למתוח אותה לצדדים. */
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px; align-items: start;
+}
+/* מפה יחידה (מחוזות בלבד, סעיף 2) אינה נמתחת על כל הרוחב — מפת
+   ישראל צרה וגבוהה, ומתיחה שלה רק מרחיקה את הצבע מהמספרים.
+   היא מוצגת בעמודה אחת ברוחב סביר, ממורכזת. */
+/* שורת מקרא של קבוצה שאין בה אף אחד — נשארת קריאה, ומעומעמת */
+.pielegend .off { opacity: .5; }
+
+/* --- עוגת הסיבות: העוגה משמאל, הקטגוריות מימין --- */
+
+/* קודם לכן הכרטיס נפרס על כל הרוחב והקטגוריות נערמו מתחת לעוגה
+   בשתי שורות — הרבה אוויר למעלה, וטקסט דחוס למטה. כאן העוגה
+   והמקרא יושבים זה לצד זה בשורה אחת: העוגה שומרת על גודלה,
+   והמקרא מקבל את כל השטח שנשאר. */
+/* שני כרטיסים בשורה: עוגת הסיבות בימין, תמונת המצב בשמאל.
+   כל אחד תופס חצי, והעוגה והמקרא בתוכו צמודים זה לזה. */
+.piecard--half { grid-column: span 1; }
+
+.piesplit {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px; align-items: center; margin-top: 6px;
+}
+.piesplit-chart { flex: 0 0 auto; }
+
+.piesplit-legend {
+  display: flex; flex-direction: column; gap: 6px; margin: 0;
+  font-size: 12.5px;
+}
+.piesplit-legend > div {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: baseline; gap: 7px;
+}
+/* האחוז והכמות בעמודות קבועות, כך שכל השורות מיושרות זו מול זו */
+.piesplit-legend .pv {
+  min-width: 44px; text-align: end; color: var(--ink-soft);
+}
+.piesplit-legend .pn {
+  min-width: 52px; text-align: end; font-weight: 600; color: #eaf2ff;
+}
+
+/* תווית ארוכה גולשת לשורה הבאה במקום להיחתך באמצע מילה */
+.pielegend .plabel {
+  flex: 1 1 auto; white-space: normal; line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.piesplit-legend .pv, .piesplit-legend .pn {
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+
+/* במסך צר: כרטיס אחד בשורה, והעוגה מעל המקרא */
+/* מסך צר מ-260 + מרווחים: הכרטיס מוותר על הרוחב הקבוע ומתמלא */
+@media (max-width: 620px) {
+  .funnelrow { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 980px) {
+  .piecard--half { grid-column: 1 / -1; }
+}
+@media (max-width: 620px) {
+  .piesplit { grid-template-columns: 1fr; gap: 14px; justify-items: center; }
+  .piesplit-legend { width: 100%; }
+}
+
+.maprow--single { grid-template-columns: minmax(0, 620px); justify-content: center; }
+
+.maphead {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 9px;
+}
+.maphead .bartitle { margin-bottom: 0; }
+.mapzoom { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.mapzoom-btn {
+  width: 26px; height: 26px; border-radius: 7px; cursor: pointer;
+  background: var(--panel); border: 1px solid #33436b; color: #cfe0f7;
+  font-size: 15px; font-weight: 700; line-height: 1; font-family: inherit;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.mapzoom-btn:hover:not(:disabled) { border-color: var(--accent); color: #fff; }
+.mapzoom-btn:disabled { opacity: .35; cursor: default; }
+.mapzoom-val {
+  font-size: 11px; color: var(--ink-soft); min-width: 34px; text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 720px) { .maprow { grid-template-columns: 1fr; } }
+
+/* ---------- גרפי עוגה ---------- */
+.pies { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 13px; }
+.piecard { padding: 13px 14px; text-align: center; }
+.piecard .bartitle { text-align: right; }
+.pielegend { font-size: 11.5px; color: var(--ink-mid); text-align: right; margin-top: 8px; }
+.pielegend div { display: flex; align-items: center; gap: 6px; padding: 1.5px 0; }
+.pielegend .swatch {
+  width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: 0 0 11px;
+}
+.pielegend .pv { margin-inline-start: auto; font-variant-numeric: tabular-nums;
+                 color: var(--ink-soft); }
+
+/* ---------- משפך ---------- */
+.funnelcard { padding: 16px; }
+.funnelsvg { width: 100%; max-width: 780px; height: auto; display: block; margin: 0 auto; }
+
+/* ---------- שורת אחוזים ראשית ---------- */
+.headline {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 13px; margin-bottom: 16px;
+}
+.headline .hitem {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px 14px; text-align: center;
+}
+.headline .hval {
+  font-size: 34px; font-weight: 700; color: #fff; line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.headline .htxt {
+  font-size: 12.5px; color: var(--ink-mid); margin-top: 7px; line-height: 1.5;
+}
+/* כמה חסר בממד — מתחת לכל מספר בשורת הפרופיל */
+.headline .hmiss {
+  font-size: 11.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.4;
+  border-top: 1px solid var(--line); padding-top: 6px;
+}
+
+/* ---------- תוויות בגרפים ---------- */
+.bbar--labelled {
+  /* האחוז יושב בתוך הצבע, בתחילתו. אין כאן רוחב מזערי: עמודה קצרה
+     חייבת להישאר קצרה, אחרת הגרף משקר על הפרופורציה. תווית שאינה
+     נכנסת מועברת אל מחוץ לצבע ב-fitBarLabels. */
+  display: flex; align-items: center; justify-content: flex-start;
+  overflow: hidden; white-space: nowrap; flex: 0 0 auto;
+}
+.bpct {
+  padding-inline-start: 8px; color: #fff; font-size: 11px; font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45); white-space: nowrap;
+}
+/* אין מקום בפנים — האחוז יושב מיד אחרי הצבע, בצבעו */
+.bpct--out {
+  padding-inline-start: 0; text-shadow: none; flex: 0 0 auto;
+  font-size: 11px; font-weight: 700;
+}
+/* גרף שיש בו תווית חיצונית ולו אחת — כל מסילותיו מקצרות בשמורה
+   ברוחבה, כך שהתווית לעולם אינה מגיעה אל עמודת המספר שלצדה.
+   הרוחב נמדד ב-fitBarLabels ונכתב כמשתנה על הטבלה. */
+table.bars--outfit .btrack { padding-inline-end: var(--outgutter, 0px); }
+.tval { fill: #cfe0f7; font-size: 9.5px; text-anchor: middle; font-weight: 600; }
+
+/* ---------- סרגל ייצוא ---------- */
+.export-bar { display: flex; justify-content: flex-start; margin-bottom: 12px; }
+
+/* ---------- עלות לליד לפי פלטפורמה ---------- */
+/* כרטיסי העלות לליד תמיד בשורה אחת — כשהם נשברו לשתי שורות היה
+   נדמה שהאחרון שייך למשהו אחר. הם מצטמצמים יחד ולא נשברים. */
+.cpl-row { display: flex; gap: 12px; flex-wrap: nowrap; }
+.cpl-card {
+  flex: 1 1 0; min-width: 0; background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px; padding: 16px 14px; text-align: center;
+}
+.cpl-card .cpl-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* השורה התחתונה נשברת לשתי שורות במקום להיחתך באמצע מספר */
+.cpl-card .cpl-foot { line-height: 1.45; }
+.cpl-card--main {
+  background: linear-gradient(120deg, var(--accent-deep), var(--panel));
+  border-color: var(--accent);
+}
+.cpl-card .cpl-name { font-size: 13px; color: var(--ink-mid); font-weight: 600; }
+.cpl-card .cpl-value {
+  font-size: 32px; font-weight: 700; color: #fff; margin: 8px 0 4px;
+  font-variant-numeric: tabular-nums; line-height: 1.05;
+}
+.cpl-card--main .cpl-value { font-size: 36px; }
+.cpl-card .cpl-foot { font-size: 10.5px; color: var(--ink-soft); }
+
+/* ---------- מקרא קווי מגמה ---------- */
+.linelegend {
+  display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px;
+  font-size: 12px; color: var(--ink-mid);
+}
+.lineitem { display: inline-flex; align-items: center; gap: 6px; }
+.lineswatch { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+
+/* ---------- צ'יפים לבחירת קמפיין ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+  background: var(--panel); border: 1px solid #33436b; border-radius: 12px;
+  padding: 10px 15px; font-size: 13.5px; color: var(--ink-mid);
+  transition: .15s; user-select: none; font-family: inherit;
+}
+.chip:hover { border-color: var(--accent); color: #fff; }
+.chip.on { background: var(--accent-deep); border-color: var(--accent); color: #fff; }
+.chip .cname { font-weight: 600; }
+.chip .cnum {
+  font-size: 11.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums;
+}
+.chip.on .cnum { color: #cfe0f7; }
+.chip .mark {
+  width: 15px; height: 15px; border-radius: 4px; border: 1px solid #4a5b85;
+  display: grid; place-items: center; font-size: 10px; flex: 0 0 15px;
+}
+.chip.on .mark { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ---------- מחוון טווח: קו אחד עם שני עיגולים ---------- */
+.rangebox {
+  background: var(--panel-soft); border: 1px solid var(--line-soft);
+  border-radius: 16px; padding: 14px 20px 16px; margin-bottom: 16px;
+}
+.range-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 4px;
+}
+.range-date {
+  font-size: 13.5px; font-weight: 700; color: #cfe0f7;
+  background: var(--panel); border: 1px solid #33436b;
+  border-radius: 8px; padding: 4px 12px; white-space: nowrap;
+}
+.range-line-label { font-size: 11.5px; color: var(--ink-soft); }
+
+.range-track { position: relative; height: 34px; }
+.range-track::before {
+  content: ''; position: absolute; inset-inline: 0; top: 15px; height: 4px;
+  background: #26314e; border-radius: 3px;
+}
+.range-fill {
+  position: absolute; top: 15px; height: 4px; background: var(--accent);
+  border-radius: 3px;
+}
+.range-input {
+  position: absolute; inset-inline: 0; top: 4px; width: 100%; height: 26px;
+  margin: 0; background: transparent; -webkit-appearance: none; appearance: none;
+  pointer-events: none; border: 0; padding: 0;
+}
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none; pointer-events: auto; cursor: grab;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 4px solid var(--accent);
+  box-shadow: 0 1px 5px rgba(0,0,0,.45);
+}
+.range-input::-moz-range-thumb {
+  pointer-events: auto; cursor: grab;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 4px solid var(--accent);
+  box-shadow: 0 1px 5px rgba(0,0,0,.45);
+}
+.range-input::-moz-range-track { background: transparent; border: 0; }
+
+.months { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.month {
+  background: var(--panel); color: var(--ink-soft); border: 1px solid #33436b;
+  border-radius: 8px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: .12s;
+}
+.month:hover { color: #fff; border-color: var(--accent); }
+.month.on { background: var(--accent-deep); color: #fff; border-color: var(--accent); }
+.month--all { margin-inline-start: auto; }
+
+/* צ'יפ ללא סימן וי — הבחירה מסומנת בהדגשה בלבד */
+.chip--plain { opacity: .55; }
+/* הגעת לתקרת ההשוואה — הצ'יפ עדיין נקרא, אבל אינו מזמין ללחיצה */
+.chip--locked { opacity: .4; cursor: not-allowed; }
+.chip--locked:hover { border-color: var(--line-soft); color: var(--ink-mid); }
+/* הערת הבורר — כמה נבחרו מתוך המותר */
+.ctl-note { font-size: 11.5px; color: var(--ink-soft); margin-inline-start: 4px; }
+.chip--plain.on { opacity: 1; font-weight: 700; }
+
+/* נקודת הצבע של הקמפיין — אותו צבע בצ'יפ, בטבלה ובגרף */
+.cdot {
+  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+  flex: 0 0 auto; margin-inline-end: 7px; vertical-align: -1px;
+}
+
+/* ---------- בורר צבעים ---------- */
+.swatches { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.swatch {
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+  border: 2px solid transparent; position: relative; display: inline-block;
+}
+.swatch:hover { border-color: #fff; }
+.swatch.on { border-color: #fff; box-shadow: 0 0 0 3px rgba(79,142,247,.5); }
+.swatch input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.swatch-hex { width: 120px !important; margin-inline-start: 8px; }
+
+/* ---------- אזור גרירה ---------- */
+.dropzone {
+  border: 2px dashed #3a4b73; border-radius: 12px; background: #131c31;
+  padding: 20px; text-align: center; transition: .15s;
+}
+.dropzone.over { border-color: var(--accent); background: #17223c; }
+.dropzone .drop-text { font-size: 13.5px; color: var(--ink-mid); margin-bottom: 12px;
+                       line-height: 1.7; }
+
+.load-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+
+/* ---------- רשת טבלאות הטעינה ---------- */
+/* תת-שורת ניווט בתוך מסך — למשל בהגדרות הקמפיין */
+.subnav { margin: 0 0 4px; }
+.subnav .nav { padding: 0 0 0; border-bottom: 1px solid var(--line); }
+.subnav .nav a { border-radius: 10px 10px 0 0; padding: 8px 15px; font-size: 13px; }
+
+/* שורת סוגי המידע — רצועה ארוכה אחת בסגנון לשוניות תחתונות,
+   כמו במסך הניהול של מפת החום.
+
+   השורה נשברת לשורות נוספות ואינה נגללת לצדדים: גלילה אופקית
+   מסתירה חלק מהאפשרויות מאחורי קצה המסך, וצריך לגלות אותן כדי
+   לדעת שהן קיימות. כשאין מקום — נפתחת עוד שורה, והכול גלוי. */
+.tpicker { margin: 4px 0 0; }
+.tchips {
+  display: flex; flex-wrap: wrap; gap: 2px 4px; overflow: visible;
+  border-bottom: 1px solid var(--line); margin-bottom: 16px;
+}
+.tchip {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  padding: 10px 14px; font-size: 12.5px; font-weight: 600;
+  color: var(--ink-mid); cursor: pointer; font-family: inherit;
+  white-space: nowrap; flex: 0 0 auto; transition: .15s;
+}
+.tchip:hover { color: #fff; }
+.tchip.on { color: #fff; border-bottom-color: var(--accent); }
+.tpanels { display: block; }
+.tpanels .tpanel[hidden] { display: none; }
+
+/* הורדת המצב הקיים ואזור הגרירה, זה לצד זה */
+.tpanel-io {
+  display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.tpanel-io > .act-btn { align-self: center; }
+.dropzone {
+  flex: 1 1 320px; min-width: 0; border: 2px dashed #33436b;
+  border-radius: 12px; padding: 12px 16px; text-align: center;
+  background: rgba(79,142,247,.03); transition: .15s;
+}
+.dropzone.over { border-color: var(--accent); background: #17223c; }
+.dropzone-main { font-size: 13px; color: #cfe0f7; font-weight: 600; }
+.dropzone-pick {
+  display: flex; gap: 8px; align-items: center; justify-content: center;
+  margin-top: 8px; flex-wrap: wrap;
+}
+.dropzone-pick input[type=file] { font-size: 10.5px; max-width: 210px; }
+
+/* הטבלה הנערכת — כל תא הוא שדה */
+table.t.grid td { padding: 3px 4px; }
+table.t.grid input {
+  width: 100%; min-width: 90px; background: #101a30; color: #e8eefc;
+  border: 1px solid #253253; border-radius: 6px; padding: 5px 8px;
+  font-family: inherit; font-size: 12px;
+}
+table.t.grid input:focus { border-color: var(--accent); outline: none; }
+th.rowact, td.rowact { width: 52px; }
+.rowdel {
+  background: none; border: 1px solid #4a2b2b; color: #e08e8e;
+  border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer;
+  font-family: inherit;
+}
+.rowdel:hover { background: #3a2020; color: #fff; }
+.gridform .table-wrap { max-height: 560px; overflow: auto; }
+.gridbar {
+  display: flex; gap: 9px; align-items: center; flex-wrap: wrap;
+  margin-top: 11px;
+}
+.gridbar .note { margin: 0; margin-inline-start: auto; }
+
+.tpanel {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+}
+.tpanel-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 8px; padding: 11px 14px; background: var(--panel-soft);
+  border-bottom: 1px solid var(--line);
+}
+.tpanel-name { font-size: 13.5px; font-weight: 700; color: #fff; }
+.tpanel-count { font-size: 11.5px; color: var(--ink-soft); white-space: nowrap; }
+.tpanel-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; }
+.tpanel-body .note { margin: 0; min-height: 32px; }
+/* ---------- חלון צף ---------- */
+.modal {
+  position: fixed; inset: 0; background: rgba(6,10,20,.68); z-index: 60;
+  display: none; align-items: center; justify-content: center; padding: 26px;
+}
+.modal.open { display: flex; }
+.modal-box {
+  background: var(--panel); border: 1px solid #33436b; border-radius: 16px;
+  width: 100%; max-width: 720px; max-height: 82vh; display: flex;
+  flex-direction: column; box-shadow: 0 12px 40px rgba(0,0,0,.5);
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--line);
+}
+.modal-title { font-size: 15px; font-weight: 700; color: #fff; }
+.modal-x {
+  background: transparent; border: 0; color: var(--ink-mid); font-size: 18px;
+  cursor: pointer; padding: 2px 8px; border-radius: 6px;
+}
+.modal-x:hover { color: #fff; background: rgba(255,255,255,.08); }
+.modal-body { padding: 18px; overflow-y: auto; }
+
+/* ---------- שורת טעינה ---------- */
+.load-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+.load-slot {
+  background: var(--panel-soft); border: 1px solid var(--line-soft);
+  border-radius: 12px; padding: 13px 14px;
+}
+.load-slot .sname { font-size: 13px; font-weight: 700; color: #cfe0f7;
+                    margin-bottom: 4px; }
+.load-slot .snote { font-size: 11px; color: var(--ink-soft); margin-bottom: 9px;
+                    line-height: 1.5; min-height: 30px; }
+.load-slot input[type=file] { font-size: 11.5px; }
+.load-slot .act-btn { margin-top: 10px; width: 100%; text-align: center;
+                      padding: 7px 10px; font-size: 12.5px; }
+
+/* ---------- הדגשות ---------- */
+.insight {
+  background: rgba(79,142,247,.08); border: 1px solid rgba(79,142,247,.25);
+  border-radius: 11px; padding: 12px 15px; font-size: 13px; color: #cfe0f7;
+  line-height: 1.7;
+}
+.insight b { color: #fff; }
+.insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+
+/* מיצוי הגשות — שורה אחת. אלה תחנות של אותו משפך, וקריאתן לרוחב
+   היא כל העניין; כשהן נשברו לשתי שורות הרצף נקטע. */
+#cc-insights-funnel {
+  grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  grid-template-columns: none;
+}
+#cc-insights-funnel .insight { text-align: center; }
+@media (max-width: 720px) {
+  #cc-insights-funnel {
+    grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* סיכום הקמפיין — הריבועים ממורכזים, וגם התוכן בתוכם */
+#cc-kpis { justify-content: center; }
+#cc-kpis .tile { text-align: center; }
+
+.delta-up { color: var(--ok); font-weight: 600; }
+.delta-down { color: var(--err); font-weight: 600; }
+.delta-flat { color: var(--ink-soft); }
+
+/* ---------- כותרות משנה ---------- */
+h2 {
+  font-size: 15px; color: #b9c8e2; margin: 24px 0 12px;
+  border-right: 3px solid var(--accent); padding-right: 10px;
+}
+h2:first-child { margin-top: 4px; }
+h3 { font-size: 13.5px; color: #cfe0f7; margin: 18px 0 8px; }
+
+/* ---------- כרטיסי KPI ---------- */
+.kpis { display: flex; flex-wrap: wrap; gap: 14px; }
+.tile {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 15px 18px; flex: 1 1 175px; min-width: 175px;
+}
+.tile .val { font-size: 29px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile .lbl { color: var(--ink-mid); font-size: 13px; margin-top: 5px; line-height: 1.4; }
+.tile .foot { color: var(--ink-soft); font-size: 11px; margin-top: 7px; }
+.tile.total {
+  flex: 1 1 100%; background: linear-gradient(120deg, var(--accent-deep), var(--panel));
+}
+.tile.total .val { font-size: 38px; }
+
+/* ---------- כרטיסים וטבלאות ---------- */
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 13px 16px;
+}
+.card + .card { margin-top: 14px; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th {
+  text-align: right; color: #8ba0c4; font-weight: 600;
+  padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+table.t td { padding: 7px 6px; border-bottom: 1px solid #202b46; }
+table.t tr:hover td { background: rgba(79,142,247,.05); }
+table.t td.num { color: #cfe0f7; font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; position: relative; }
+
+/* הצללה בקצה שממנו נשאר עוד תוכן — הסימן היחיד שאומר שהטבלה
+   נגללת. בלעדיו היא פשוט נראית חתוכה, ובטלפון אף אחד לא מנחש
+   שאפשר להחליק אותה הצידה. */
+.table-wrap.is-scrollable::before,
+.table-wrap.is-scrollable::after {
+  content: ''; position: sticky; top: 0; z-index: 3;
+  display: block; width: 26px; height: 100%;
+  pointer-events: none; transition: opacity .18s;
+}
+.table-wrap.is-scrollable::before {
+  float: right; margin-inline-end: -26px;
+  background: linear-gradient(to left, var(--panel), transparent);
+}
+.table-wrap.is-scrollable::after {
+  float: left; margin-inline-start: -26px;
+  background: linear-gradient(to right, var(--panel), transparent);
+}
+.table-wrap.at-start::before { opacity: 0; }
+.table-wrap.at-end::after { opacity: 0; }
+
+/* טבלת ההשוואה: כל מדד גוש בפני עצמו — שורת כותרת, רקע משלו,
+   וקו שסוגר אותו. בלי זה כל המדדים נשפכו לרשימה אחת ארוכה. */
+table.t tr.grp--a td { background: rgba(79,142,247,.05); }
+table.t tr.grp--b td { background: rgba(34,195,154,.05); }
+table.t tr.grp-head td {
+  font-weight: 700; color: #fff; font-size: 12.5px;
+  padding: 10px 8px 7px; letter-spacing: .2px;
+  border-top: 2px solid var(--line);
+}
+table.t tr.grp--a.grp-head td { border-inline-start: 3px solid #4F8EF7; }
+table.t tr.grp--b.grp-head td { border-inline-start: 3px solid #22c39a; }
+table.t tr.grp-last td { border-bottom: 2px solid var(--line); }
+table.t td.grp-key { padding-inline-start: 18px; color: #cfe0f7; }
+
+/* ---------- תתי-קמפיין ----------
+
+   בקמפיין מחולק, שורת השבבים היא הבורר של כל מסך הביצועים. השבב
+   הנבחר מודגש בצבע המערכת, ולא רק בגבול — הוא קובע מה כל המסך
+   שמתחתיו מציג, וזה צריך להיראות מהמבט הראשון.
+
+   בטבלה המתחלחלת שורת תת-הקמפיין היא הכותרת והפלטפורמות מוזחות
+   תחתיה, כדי שיהיה גלוי מה מסכם את מה. שורת ה"כולל" בתחתית סוגרת
+   את הטבלה בקו ומודגשת — היא היחידה שכוללת גם את מי שאין לו סיווג. */
+.subchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; }
+.subchip {
+  display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+  padding: 8px 13px; border-radius: 10px; cursor: pointer;
+  background: var(--panel-soft); border: 1px solid var(--line);
+  color: var(--ink-mid); font-family: inherit; font-size: 13px;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.subchip:hover { border-color: var(--accent); color: var(--ink); }
+.subchip.on {
+  background: var(--accent-deep); border-color: var(--accent); color: #fff;
+}
+.subchip-name { font-weight: 600; }
+.subchip-count { font-size: 11px; color: var(--ink-soft); }
+.subchip.on .subchip-count { color: #bcd4f7; }
+
+table.t tr.sub-head td {
+  font-weight: 700; color: #fff; font-size: 12.5px;
+  padding: 10px 8px 7px; border-top: 2px solid var(--line);
+  border-inline-start: 3px solid var(--accent);
+  background: rgba(79,142,247,.07);
+}
+table.t tr.sub-row td { background: rgba(79,142,247,.02); }
+table.t tr.sub-row td.sub-in { padding-inline-start: 20px; }
+table.t tr.sub-total td {
+  font-weight: 700; color: #fff; border-top: 2px solid var(--line);
+  background: rgba(34,195,154,.07);
+  border-inline-start: 3px solid var(--ok);
+}
+
+/* ---------- גרפי עמודות ---------- */
+.barstack {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 14px; margin: 6px 0 4px;
+}
+.barcard { padding: 13px 16px; }
+/* כרטיס פלטפורמה נושא את צבעה בפס הצד ובקו הכותרת */
+.platcard { border-inline-start: 3px solid var(--accent); }
+
+/* פירוט לפי פלטפורמה — עמודה לכל פלטפורמה, זו לצד זו.
+
+   קודם לכן ארבעת המדדים נפרסו לרוחב הכרטיס ונשברו לשתי שורות
+   בגדלים משתנים, ולכן אי אפשר היה להשוות מדד בין פלטפורמות.
+   עכשיו כל פלטפורמה היא עמודה אחת, המדדים באותו סדר בכולן,
+   וקריאה לרוחב משווה את אותו מדד. */
+#cc-platform-cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  align-items: stretch;
+}
+#cc-platform-cards .platcard { display: flex; flex-direction: column; }
+.platstack {
+  display: flex; flex-direction: column; gap: 10px; flex: 1 1 auto;
+}
+.platstack .tile {
+  flex: 1 1 auto; min-width: 0; display: flex;
+  flex-direction: column; justify-content: center;
+}
+.platstack .tile .val { font-size: 24px; }
+.cpl-card--tinted { border-top: 3px solid var(--accent); }
+
+/* השוואה חזותית בין הפלטפורמות — שתי שורות של שלושה כרטיסים.
+
+   שש הכותרות, שש עמודות התווית ושש עמודות הערך יושבות באותם
+   מקומות, ולכן אפשר לקרוא את הגרפים לרוחב ולמטה כמו טבלה.
+   אין כאן אחוזים: אורך העמודה כבר אומר את היחס בין הפלטפורמות,
+   ומספר האחוז שלצדו רק חזר עליו במילים. */
+#cc-media-bars .barstack {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#cc-media-bars .barcard { display: flex; flex-direction: column; }
+#cc-media-bars table.bars { margin-top: auto; }
+/* מסילה בהירה מאחורי הצבע — גם עמודה קצרה נקראת ביחס לשלם */
+#cc-media-bars .btrack {
+  background: rgba(255, 255, 255, .05); border-radius: 5px;
+}
+#cc-media-bars .bbar { height: 21px; border-radius: 5px; }
+@media (max-width: 900px) {
+  #cc-media-bars .barstack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  #cc-media-bars .barstack { grid-template-columns: 1fr; }
+}
+.bartitle {
+  font-size: 13px; font-weight: 700; color: #cfe0f7; margin-bottom: 9px;
+  border-right: 3px solid var(--accent); padding-right: 9px;
+}
+table.bars { width: 100%; border-collapse: collapse; table-layout: fixed; }
+table.bars td { border: none; padding: 3px 4px; vertical-align: middle; }
+td.blab {
+  /* רחב מספיק לתווית ארוכה כמו "שבוע 11 (04/04–11/04)" — תווית
+     חתוכה באמצע אינה שווה דבר. */
+  width: 158px; max-width: 158px; color: #cfe0f7; font-size: 12px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* עמודת הצבע לוקחת את כל מה שנשאר — התווית והכמות בלבד קבועות,
+   ולכן הצבע נמשך כמעט עד סוף השורה. */
+td.bwrap { width: auto; }
+.btrack { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bbar {
+  height: 19px; border-radius: 4px; min-width: 3px; transition: width .25s;
+}
+td.bval {
+  /* רחב מספיק למספר בן תשע ספרות (31,356,010). ב-66px המספר גלש
+     מהעמודה ודחף את תחילת הצבע, ולכן העמודות בכרטיסים השונים לא
+     התחילו באותו מקום ואי אפשר היה להשוות ביניהן במבט. */
+  width: 92px; text-align: left; color: var(--ink-mid); font-size: 12px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.tnote { color: var(--ink-soft); font-size: 11px; margin-top: 7px; line-height: 1.6; }
+/* כמות הערכים הריקים — יורדת מהגרף אך נשארת גלויה מתחתיו */
+.emptynote {
+  color: var(--ink-soft); font-size: 10.5px; margin-top: 8px;
+  padding-top: 7px; border-top: 1px dashed #2b3757;
+}
+
+/* ---------- גרף מגמה ---------- */
+.trendcard { padding: 13px 16px; margin: 14px 0 4px; }
+.tsvg { width: 100%; height: auto; display: block; margin-top: 4px; overflow: visible; }
+.tgrid { stroke: var(--line); stroke-width: 1; }
+.tylab { fill: var(--ink-soft); font-size: 10px; text-anchor: end; }
+.txlab { fill: var(--ink-soft); font-size: 10px; text-anchor: middle; }
+
+/* ---------- סרגל בקרה ---------- */
+.ctl {
+  background: var(--panel-soft); border: 1px solid var(--line-soft);
+  border-radius: 16px; padding: 12px 16px; display: flex;
+  align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.ctl-dates { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ctl-label { font-size: 12.5px; color: var(--ink-mid); font-weight: 600; }
+.ctl-sep { color: var(--ink-soft); font-size: 12px; }
+.ctl input[type=date] {
+  background: #0d1424; border: 1px solid #33436b; border-radius: 7px;
+  color: var(--ink); padding: 6px 9px; font-family: inherit; font-size: 12.5px;
+}
+.ctl input[type=date]:focus { outline: none; border-color: var(--accent); }
+.ctl-state { font-size: 12.5px; color: var(--ink-mid); margin-inline-start: auto; }
+.ctl-state.filtered { color: var(--warn); font-weight: 600; }
+
+/* ---------- פאנל מסננים ---------- */
+.fbox {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 10px;
+}
+.fgrp {
+  background: var(--panel-soft); border: 1px solid var(--line-soft);
+  border-radius: 12px; padding: 0 0 8px;
+}
+.ghead {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 9px 12px; border-bottom: 1px solid var(--line-soft);
+  background: #182240; border-radius: 12px 12px 0 0;
+}
+.ghead .gname { font-size: 12.5px; font-weight: 700; color: #cfe0f7; }
+.ghead .gcnt { font-size: 10.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.gbtns { display: flex; gap: 4px; padding: 7px 12px 4px; }
+.mini {
+  flex: 1; background: #20304f; color: var(--ink-mid); border: 1px solid #33436b;
+  border-radius: 7px; padding: 4px 0; cursor: pointer; font-family: inherit;
+  font-size: 11px; transition: .12s;
+}
+.mini:hover { color: #fff; border-color: var(--accent); background: #27395e; }
+.mini.reset:hover { border-color: var(--warn); color: var(--warn); }
+.scroll { max-height: 230px; overflow-y: auto; padding: 2px 12px 0; }
+.scroll::-webkit-scrollbar { width: 7px; }
+.scroll::-webkit-scrollbar-thumb { background: #33436b; border-radius: 4px; }
+label.chk {
+  display: flex; align-items: center; gap: 6px; font-size: 12.5px;
+  cursor: pointer; padding: 2.5px 0; color: var(--ink);
+}
+label.chk:hover { color: #fff; }
+label.chk .cnt {
+  color: var(--ink-soft); font-size: 10.5px; margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+label.chk input { accent-color: var(--accent); }
+
+/* ---------- כפתורים ---------- */
+.act-btn {
+  background: var(--accent-deep); color: #fff; border: 1px solid var(--accent);
+  border-radius: 10px; padding: 9px 17px; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 600; transition: .15s; text-decoration: none;
+  display: inline-block;
+}
+.act-btn:hover { background: #2d4d80; transform: translateY(-1px); }
+.act-btn.ghost { background: transparent; border-color: #33436b; color: var(--ink-mid); }
+.act-btn.ghost:hover { color: #fff; border-color: var(--accent); background: #20304f; }
+.act-btn.go { background: #1f7a4d; border-color: #2fa269; }
+.act-btn.go:hover { background: #248c58; }
+.act-btn.small { padding: 5px 12px; font-size: 12px; }
+button.act-btn { font-family: inherit; }
+
+/* ---------- כרטיסי קמפיין ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 13px; }
+a.camp {
+  display: block; text-decoration: none; color: inherit; background: var(--panel);
+  border: 1px solid #33436b; border-radius: 14px; padding: 16px 18px; transition: .15s;
+}
+a.camp:hover { border-color: var(--accent); background: #20304f; transform: translateY(-2px); }
+a.camp .cname { font-size: 16.5px; font-weight: 700; color: #fff; }
+a.camp .cmeta { font-size: 12px; color: #8ba0c4; margin-top: 8px; line-height: 1.75; }
+a.camp .cstats { display: flex; gap: 14px; margin-top: 11px; flex-wrap: wrap; }
+a.camp .cstat { display: flex; flex-direction: column; }
+a.camp .cstat b { font-size: 17px; color: #cfe0f7; font-variant-numeric: tabular-nums; }
+a.camp .cstat span { font-size: 10.5px; color: var(--ink-soft); }
+
+/* ---------- תגי מצב ---------- */
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 600;
+}
+.badge.ok { background: rgba(34,195,154,.15); color: var(--ok); }
+.badge.warn { background: rgba(255,200,87,.15); color: var(--warn); }
+.badge.err { background: rgba(249,115,98,.16); color: var(--err); }
+.badge.pend { background: rgba(79,142,247,.15); color: var(--accent); }
+.badge.idle { background: rgba(159,179,212,.12); color: var(--ink-mid); }
+
+/* ---------- הודעות ---------- */
+.msg { padding: 11px 16px; border-radius: 11px; margin-bottom: 14px; font-size: 13.5px; }
+.msg.ok { background: rgba(34,195,154,.12); color: var(--ok); border: 1px solid rgba(34,195,154,.3); }
+.msg.err { background: rgba(249,115,98,.12); color: var(--err); border: 1px solid rgba(249,115,98,.3); }
+.msg.warn { background: #3a2b16; color: #f0d9a8; border: 1px solid #7a5a25; }
+.warn {
+  background: #3a2b16; border: 1px solid #7a5a25; color: #f0d9a8;
+  border-radius: 10px; padding: 11px 13px; font-size: 12.5px;
+  line-height: 1.65; margin-bottom: 12px;
+}
+.note { font-size: 11.5px; color: var(--ink-soft); line-height: 1.6; }
+
+/* שורת הסבר מתחת לכותרת מסך. שימשה בארבעה מסכים ומעולם לא עוצבה,
+   ולכן ירדה כפסקה בגודל מלא — בטלפון היא תפסה חצי מסך. */
+.hint {
+  font-size: 12px; color: var(--ink-mid); line-height: 1.65;
+  margin: -4px 0 12px; max-width: 78ch;
+}
+
+/* הודעת כשל מקומית — נשארת בתוך המקטע שלה ואינה מפילה את המסך */
+.err-note { color: #ffb4ab; }
+
+/* ---------- טפסים ---------- */
+label.field { display: block; font-size: 12.5px; color: var(--ink-mid); margin: 13px 0 5px; font-weight: 600; }
+input[type=text], input[type=number], select, textarea {
+  width: 100%; padding: 9px 11px; font-size: 13px; font-family: inherit;
+  background: #0d1424; border: 1px solid #33436b; border-radius: 8px; color: var(--ink);
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+select.inline { width: auto; min-width: 200px; }
+textarea { min-height: 110px; resize: vertical; font-size: 12.5px; line-height: 1.6; }
+input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); vertical-align: middle; margin-inline-end: 7px; }
+input[type=file] { color: var(--ink-mid); font-size: 12.5px; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0 18px; }
+.form-actions { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* ---------- לשוניות פנימיות ---------- */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; }
+.tabs a {
+  background: var(--panel-soft); color: var(--ink-mid); border: 1px solid var(--line-soft);
+  border-radius: 9px; padding: 8px 15px; font-size: 13px; text-decoration: none;
+  font-weight: 600; transition: .15s;
+}
+.tabs a:hover { color: #fff; border-color: var(--accent); }
+.tabs a.on { background: var(--accent-deep); color: #fff; border-color: var(--accent); }
+
+/* ---------- רשימות קבצים ---------- */
+.files { list-style: none; padding: 0; margin: 0; }
+.files li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 13px; background: var(--panel-soft); border: 1px solid var(--line-soft);
+  border-radius: 9px; margin-bottom: 7px; font-size: 13px; gap: 10px;
+}
+
+.log {
+  background: #0d1424; border: 1px solid var(--line-soft); border-radius: 9px;
+  padding: 13px; font-family: Consolas, "Courier New", monospace; font-size: 12px;
+  line-height: 1.75; max-height: 340px; overflow: auto; white-space: pre-wrap;
+  color: var(--ink-mid);
+}
+.link-box {
+  direction: ltr; text-align: left; font-family: Consolas, monospace; font-size: 12.5px;
+  background: #0d1424; padding: 10px 13px; border-radius: 8px; word-break: break-all;
+  border: 1px solid var(--line-soft); color: var(--ink-mid);
+}
+
+.empty { text-align: center; padding: 52px 20px; color: var(--ink-mid); }
+.empty .big { font-size: 18px; color: #fff; margin-bottom: 9px; font-weight: 600; }
+.empty .act-btn { margin-top: 18px; }
+
+footer {
+  text-align: center; color: var(--ink-soft); font-size: 12px;
+  padding: 0 20px 30px; line-height: 1.7;
+}
+
+/* ---------- סלולר ----------
+
+   שלושה שינויים נושאים את כל המסך הצר:
+   סרגל הצד הופך לשורת ניווט עליונה שנכנסת כולה במסך ואינה נגללת,
+   הלשוניות הופכות לרצועה אחת שנגללת לצדדים במקום להישבר לשורות,
+   והרשתות יורדות לעמודה אחת — למעט כרטיסי המספרים, שנשארים שניים
+   בשורה כדי שלא ייווצר טור אינסופי של כרטיסים ריקים. */
+
+@media (max-width: 860px) {
+  .layout { flex-direction: column; }
+
+  /* שורת ניווט עליונה: המותג בצד אחד, הקישורים בשני. אין גלילה
+     אופקית — הקישורים מצטמצמים עד שהם נכנסים. */
+  .sidebar {
+    width: auto; flex: none; flex-direction: row; align-items: center;
+    justify-content: space-between; gap: 8px; padding: 9px 12px;
+    overflow: visible; position: sticky; top: 0; z-index: 30;
+  }
+  .brand { padding: 0; flex: 0 1 auto; min-width: 0; gap: 8px; }
+  .brand-mark { width: 30px; height: 30px; font-size: 15px; flex: 0 0 auto; }
+  .brand-text strong {
+    font-size: 13px; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand-text span { display: none; }
+  .side-nav { flex-direction: row; gap: 5px; flex: 0 0 auto; }
+  .side-nav a { padding: 7px 10px; font-size: 12.5px; white-space: nowrap; }
+  .side-nav .ico { display: none; }
+  .side-foot { display: none; }
+
+  header { padding: 12px 14px; }
+  header h1 { font-size: 17px; }
+  .camp-head .ctitle { font-size: 18px; }
+  .camp-head .cdesc { font-size: 12px; }
+  .head-row { gap: 10px; }
+  .head-actions { width: 100%; }
+  .head-actions .act-btn { flex: 1 1 auto; text-align: center; }
+
+  /* לשוניות: רצועה אחת שנגללת לצדדים. שבירה לשלוש שורות לא שוות
+     הסתירה איזו לשונית פעילה ואכלה חצי מסך. */
+  .nav {
+    flex-wrap: nowrap; overflow-x: auto; padding: 10px 12px 0; gap: 6px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a {
+    flex: 0 0 auto; padding: 9px 13px; font-size: 12.5px;
+    scroll-snap-align: start;
+  }
+
+  .wrap { padding: 14px 12px 40px; }
+  h2 { font-size: 14px; margin: 18px 0 10px; }
+
+  /* רשת הבטיחות: שום דבר אינו מותח את העמוד לרוחב.
+
+     כל פעם שנוסף רכיב רחב חדש — טבלה, גרף, ציר — הוא מצא את
+     אותה תקלה מחדש: העמוד נמתח לרוחבו, וכל השאר הוקטן ונדחף
+     החוצה. הכלל הזה סוגר את זה במקור אחד: הגוף אינו נגלל
+     לרוחב, וכל רכיב רחב חייב לגלול בתוך עצמו. */
+  html, body { max-width: 100%; overflow-x: hidden; }
+  .layout, .main, .wrap, header, .nav { max-width: 100%; min-width: 0; }
+  .wrap > * { max-width: 100%; }
+  pre, .log { overflow-x: auto; max-width: 100%; }
+
+  /* כרטיסי מספרים — שניים בשורה. כרטיס הסיכום לבדו על הרוחב. */
+  .kpis { gap: 8px; }
+  .tile { flex: 1 1 calc(50% - 4px); min-width: 0; padding: 12px 13px; }
+  .tile .val { font-size: 21px; }
+  .tile .lab { font-size: 11.5px; }
+  .tile.total { flex: 1 1 100%; }
+  .tile.total .val { font-size: 30px; }
+
+  .cpl-row { flex-wrap: wrap; }
+  .cpl-card { flex: 1 1 calc(50% - 6px); min-width: 0; padding: 13px 10px; }
+  .cpl-card .cpl-value { font-size: 25px; }
+  .cpl-card--main .cpl-value { font-size: 28px; }
+
+  .barstack, .pies, .maprow, .headline, .load-row, .cards, .grid {
+    grid-template-columns: 1fr;
+  }
+  .fbox { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr; }
+
+  /* טבלה רחבה נגללת בתוך המכל שלה, והמסך נשאר ברוחב המכשיר.
+
+     קודם לכן הטבלה מתחה את העמוד כולו לרוחבה: כדי שכל העמודות
+     ייכנסו בבת אחת, כל הכותרות, הכרטיסים והגרפים נדחקו החוצה
+     והכול נראה מוקטן ושבור. עכשיו הטבלה עצמה מקבלת פס גלילה
+     ואפשר להזיז אותה הצידה כדי לראות את שאר העמודות.
+
+     ‎min-width:0‎ נחוץ כאן: פריט ברשת או ב-flex אינו מצטמצם מתחת
+     לרוחב התוכן שלו כברירת מחדל, וכל ה-overflow למטה לא היה
+     נכנס לפעולה בלעדיו. */
+  .table-wrap {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    max-width: 100%; min-width: 0;
+  }
+  .table-wrap table.t { min-width: max-content; }
+
+  /* העמודה הראשונה נעוצה בזמן גלילה לרוחב.
+
+     בלעדיה, ברגע שגוללים כדי להגיע ל"מדד ייצוג" נעלם שם המחוז,
+     והמספר שמגיעים אליו אינו שייך לאף אחד. הרקע חייב להיות אטום —
+     תא שקוף היה מראה את העמודות שעוברות מתחתיו. */
+  .table-wrap table.t th:first-child,
+  .table-wrap table.t td:first-child {
+    position: sticky; inset-inline-start: 0; z-index: 2;
+    background: var(--panel);
+  }
+  /* שורת הכותרת גוברת על השורות, ולכן היא מקבלת גוון משלה */
+  .table-wrap table.t th:first-child { background: var(--panel-soft); }
+  .table-wrap table.t tr:hover td:first-child { background: #1f2a49; }
+  .main, .wrap, .card, .barstack > *, .pies > *, .duo > * { min-width: 0; }
+  .card { max-width: 100%; }
+  .card--slim { max-width: 100%; }
+  table.t { font-size: 12px; }
+  table.t th, table.t td { padding: 6px 8px; }
+
+  /* טבלת ההשוואה נמתחת לרוחב תוכנה — אבל רק בתוך העטיפה שנגללת.
+     בלי התנאי הזה היא מתחה את העמוד עצמו: הכלל היה קיים, העטיפה
+     לא, וזה מה שהפך כל מסך עם טבלה לרחב מהמכשיר. */
+  .table-wrap table.cmp { min-width: max-content; }
+
+  /* גרף עמודות אינו נמתח — הוא מצטמצם. עמודה שהתקצרה עדיין
+     נקראת; טבלה שיצאה מהמסך לא. */
+  table.bars { table-layout: fixed; width: 100%; }
+
+  /* ציר הזמן נגלל לרוחב במסך צר, ואינו נדחס — שתים-עשרה משבצות
+     ברוחב טלפון הן משבצות ברוחב שני פיקסלים, שאינן אומרות דבר. */
+  .tl { overflow-x: auto; }
+  .tl-axis, .tl-lane { min-width: 520px; }
+
+  /* בגרף העמודות שם הפריט הוא העיקר — הוא מקבל את המקום, והכמות
+     מצטמצמת. תווית חתוכה באמצע אינה שווה דבר. */
+  td.blab { width: 40%; max-width: 40%; font-size: 11.5px; }
+  td.bval { width: 52px; font-size: 11px; }
+  .bpct { font-size: 10px; padding-inline-start: 6px; }
+
+  /* גם במסך צר השורה נשברת, ולא נגללת — כל האפשרויות גלויות */
+  .tchips { flex-wrap: wrap; }
+  .tchip { flex: 0 0 auto; padding: 7px 12px; font-size: 12px; }
+  .tpanel-actions { gap: 6px; }
+  .tpanel-actions .act-btn { flex: 1 1 auto; text-align: center; }
+  .tpanel-actions input[type=file] { flex: 1 1 100%; }
+
+  .ctl { padding: 10px 12px; gap: 10px; }
+  .ctl-state { margin-inline-start: 0; width: 100%; }
+  .rangebox { padding: 12px 14px; }
+  .range-date { font-size: 12px; padding: 3px 9px; }
+  .months { gap: 5px; }
+  .month { padding: 4px 9px; font-size: 11px; }
+
+  .modal { padding: 12px; }
+  .modal-box { max-height: 88vh; }
+  .funnelsvg { max-width: 100%; }
+  .files li { flex-direction: column; align-items: stretch; gap: 7px; }
+  .export-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+
+  .maphead { flex-wrap: wrap; }
+  .pielegend { font-size: 11px; }
+
+  /* --- המסכים שנוספו לענן --- */
+
+  /* כרטיס קמפיין אחד בשורה: הכרטיס נועד להילחץ באצבע, ושניים
+     בשורה הופכים אותו לצר מדי מכדי לקרוא שם קמפיין. */
+  .homegrid { grid-template-columns: 1fr; }
+  .homecard { padding: 14px 13px 11px; }
+  .homecard-name { font-size: 14px; white-space: normal; }
+  .homestat b { font-size: 16px; }
+
+  /* משפכים: עד שניים בשורה, ובמסך צר יותר אחד (ראו למעלה) */
+  .funnelrow { grid-template-columns: repeat(auto-fill, minmax(0, 260px)); }
+
+  /* גרף השוואה: התווית מקבלת יותר מקום, האחוז מצטמצם */
+  table.cmp .blab { width: 38%; max-width: 38%; font-size: 11px; }
+  table.cmp .bval { width: 44px; font-size: 10.5px; }
+  .btrack--thin, .btrack--thin .bbar { height: 13px; }
+  table.cmp .bpct { font-size: 9px; padding-inline-start: 5px; }
+  h3.annual-section { font-size: 13px; margin: 18px 0 9px; }
+
+  /* עוגה ומקרא — זה מעל זה, ולא זה לצד זה בצר */
+  .piesplit { grid-template-columns: 1fr; justify-items: center; gap: 12px; }
+  .piesplit-legend { width: 100%; font-size: 11.5px; }
+  .piesplit-legend .pv { min-width: 40px; }
+  .piesplit-legend .pn { min-width: 46px; }
+
+  /* שער הכניסה: הכללים לנייד יושבים ב-auth.css עצמו. הוא נטען אחרי
+     הקובץ הזה, ולכן כלל כאן היה נדרס בכלל הרגיל שלו (.cc-gate). */
+  .cc-who {
+    inset-inline: 0; border-radius: 0; justify-content: space-between;
+    border-inline: none;
+  }
+}
+
+/* ---------- מסך צר במיוחד ---------- */
+@media (max-width: 430px) {
+  .brand-text { display: none; }
+  .side-nav a { padding: 7px 9px; font-size: 12px; }
+  .tile .val { font-size: 19px; }
+  .homestat { padding: 7px 2px; }
+  .homestat b { font-size: 15px; }
+  .homestat span { font-size: 10px; }
+  table.cmp .blab { width: 34%; max-width: 34%; }
+  .tile.total .val { font-size: 27px; }
+  .swatch { width: 24px; height: 24px; }
+  .chip { padding: 8px 11px; font-size: 12.5px; }
+  .cpl-card .cpl-value { font-size: 22px; }
+  td.blab { width: 44%; max-width: 44%; font-size: 11px; }
+  td.bval { width: 46px; font-size: 10.5px; }
+  .camp-head .ctitle { font-size: 16.5px; }
+  .wrap { padding: 12px 10px 36px; }
+}
+
+
+/* ---------- שדה תאריך ---------- */
+.datefield { display: flex; align-items: center; gap: 6px; }
+.datefield input[type="text"] { flex: 1 1 auto; min-width: 0; }
+.datefield input[type="date"] {
+  /* בורר לוח השנה של הדפדפן, מוקטן לכפתור לצד השדה. השדה עצמו
+     נשאר פתוח להקלדה חופשית בכל פורמט. */
+  flex: 0 0 auto; width: 40px; padding: 9px 6px; cursor: pointer;
+  color: transparent;
+}
+.datefield input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer; filter: invert(0.8);
+}
+.datefield input[type="date"]::-webkit-datetime-edit { display: none; }
+
+/* אזור גרירה בזמן טעינה — הקובץ נשלח, והמסך אומר זאת */
+.dropzone.busy { opacity: .6; pointer-events: none; }
+
+/* ---------- פס הרצת רקע ---------- */
+.runbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 11px 15px; border-radius: 12px; margin-bottom: 14px;
+  font-size: 13px; border: 1px solid var(--line);
+}
+.runbar.working { background: #1b2b4a; border-color: var(--accent); color: #d7e6ff; }
+.runbar.done.ok { background: #15342a; border-color: var(--ok); color: #cdf3e6; }
+.runbar.done.warn { background: #3a2f14; border-color: var(--warn); color: #f6e6bd; }
+.runbar.done.err { background: #3a1c1a; border-color: var(--err); color: #f8d6d1; }
+.runbar a { color: inherit; font-weight: 700; text-decoration: underline; }
+.runspin {
+  width: 15px; height: 15px; border-radius: 50%; flex: 0 0 15px;
+  border: 2px solid rgba(255,255,255,.25); border-top-color: var(--accent);
+  animation: runspin .8s linear infinite;
+}
+@keyframes runspin { to { transform: rotate(360deg); } }
+
+/* ---------- מסך התראות ---------- */
+.al-topic { white-space: nowrap; font-weight: 600; color: #cfe0f7; }
+.al-act { white-space: nowrap; text-align: left; }
+tr.al-err td:first-child { border-inline-start: 3px solid var(--err); }
+tr.al-warn td:first-child { border-inline-start: 3px solid var(--warn); }
+tr.al-info td:first-child { border-inline-start: 3px solid var(--line); }
+
+/* ניווט בין עמודי טבלה ארוכה */
+.gridpager {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+/* עלות ממוצעת לליד — שורה אחרונה בכרטיס הפלטפורמה, מודגשת */
+.platstack .tile-cpl {
+  border-width: 2px; background: var(--panel-soft);
+}
+.platstack .tile-cpl .val { font-size: 27px; }
+
+/* לקיחת קובץ מקמפיין אחר — בתוך המשבצת, לאותה קטגוריה בלבד */
+.copyrow {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  margin: 10px 0 14px; padding: 9px 12px; border-radius: 10px;
+  background: var(--panel-soft); border: 1px solid var(--line-soft);
+}
+
+/* מניין ההתראות על צ'יפ הטעינה */
+.albadge {
+  display: inline-block; margin-inline-start: 6px; padding: 1px 7px;
+  border-radius: 9px; font-size: 10.5px; font-weight: 700;
+}
+.albadge.err { background: #4a1f1c; color: #ffb4ab; }
+.albadge.warn { background: #4a3c16; color: #ffdf8a; }
+.albadge.ok { background: #1c3b31; color: #8fe3c6; }
+a.tchip { text-decoration: none; display: inline-flex; align-items: center; }
+
+/* משבצת סוג דוח במסך ההתראות, נצבעת לפי מה שנמצא בטעינה האחרונה
+   שלו: אדום = שגיאה, כתום = אזהרות, ירוק = נקי. */
+.tchip.bad { color: #ffb4ab; border-bottom-color: var(--err); }
+.tchip.warns { color: #ffd9a8; border-bottom-color: #d99b3a; }
+.tchip.good { color: #9fe3c6; }
+.tchip.bad.on, .tchip.warns.on, .tchip.good.on { color: #fff; }
+
+/* ערכים לא מוכרים — בראש מסך טעינת הנתונים */
+.unknown-box {
+  border-color: var(--err); background: #2a1614; margin-bottom: 16px;
+}
+.unknown-box .bartitle { color: #ffb4ab; }
+
+/* --- עמוד הבית שבענן --- */
+
+/* כרטיס לכל קמפיין: השם בצבע הקמפיין, המספרים המרכזיים, ומשפך
+   זעיר שמראה את הצורה שלו. הכרטיס כולו הוא קישור. */
+.homegrid {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.homecard {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--panel); border: 1px solid #24314f; border-radius: 14px;
+  padding: 16px 15px 13px; position: relative; overflow: hidden;
+  transition: border-color .15s, transform .15s;
+}
+/* פס הצבע של הקמפיין — הסימן שמלווה אותו בכל המסכים */
+.homecard::before {
+  content: ''; position: absolute; inset-block-start: 0;
+  inset-inline: 0; height: 3px; background: var(--cc, #4F8EF7);
+}
+.homecard:hover { border-color: var(--cc, var(--accent)); transform: translateY(-2px); }
+
+.homecard-head { display: flex; align-items: center; gap: 8px; }
+.homecard-head .cdot {
+  width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto;
+}
+.homecard-name {
+  font-size: 15px; font-weight: 700; color: #eaf2ff; line-height: 1.3;
+}
+.homecard-range {
+  font-size: 11.5px; color: var(--ink-soft); margin: 5px 0 0;
+  padding-inline-start: 18px;
+}
+
+.homecard-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; margin: 13px 0 4px;
+}
+.homestat {
+  text-align: center; background: #131c31; border-radius: 9px; padding: 8px 4px;
+}
+.homestat b {
+  display: block; font-size: 17px; color: #eaf2ff;
+  font-variant-numeric: tabular-nums;
+}
+.homestat span { font-size: 11px; color: var(--ink-soft); }
+
+.homecard-shape { margin: 6px 0 2px; }
+
+.homecard-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11.5px; color: var(--ink-soft);
+  border-top: 1px solid #24314f; padding-top: 9px; margin-top: 6px;
+}
+.homecard-go { color: var(--cc, var(--accent)); font-weight: 600; }
+
+/* --- לוח בקרה שנתי: השוואה בין קמפיינים --- */
+
+/* הלוח השנתי בלשוניות (07/10/2026): למעלה הקמפיינים והטווח, מתחתם
+   שורת לשוניות כמו במסך הקמפיין — נצמדת לראש המסך בגלילה — ולשונית
+   אחת גלויה בכל רגע. */
+.annual-top { margin-bottom: 6px; }
+.annual-tabs {
+  position: sticky; top: 0; z-index: 6; background: var(--bg);
+  margin: 16px 0 14px; padding-top: 6px;
+}
+.annual-tabs .nav a { cursor: pointer; }
+section.annual-pane[hidden] { display: none; }
+.cmp-missing { color: var(--ink-mid); }
+/* ייצוא הלוח השנתי למצגת: כל הלוח מעל הלשוניות, ולשונית בראש כל לשונית */
+.annual-export { margin-top: 12px; align-items: center; gap: 12px; }
+.annual-pane-export { display: flex; justify-content: flex-end; margin: 0 0 8px; }
+
+/* חלונית בלוח השנתי: פרופיל המועמדים, ובנפרד נתוני ההגשות וההמרות */
+section.annual-panel {
+  margin-top: 22px; padding: 2px 18px 18px;
+  border: 1px solid var(--line); border-radius: 16px;
+  background: rgba(255, 255, 255, .018);
+}
+section.annual-panel > h2:first-child {
+  font-size: 18px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+
+/* כותרת קטגוריה. הלוח מסודר לפי מסכי הקמפיין, וכל קטגוריה היא
+   מסך אחד — כך מי שמכיר את המסכים מוצא את עצמו גם כאן. */
+h3.annual-section {
+  margin: 22px 0 10px; font-size: 14px; color: var(--ink-soft);
+  letter-spacing: .02em; padding-bottom: 7px;
+  border-bottom: 1px solid #24314f;
+}
+
+/* גרף השוואה: שורה לכל קמפיין, וקבוצה לכל ערך */
+table.cmp { width: 100%; border-collapse: collapse; }
+table.cmp td { padding: 1px 5px; vertical-align: middle; }
+table.cmp tr.cmp-first td { padding-top: 8px; }
+table.cmp tr.cmp-first:first-child td { padding-top: 0; }
+table.cmp .blab {
+  width: 33%; max-width: 160px; font-size: 12px; color: var(--ink-soft);
+  line-height: 1.35; overflow-wrap: anywhere;
+}
+table.cmp .bval {
+  width: 58px; text-align: end; font-size: 11.5px;
+  color: var(--ink-mid); font-variant-numeric: tabular-nums;
+}
+/* עמודה מעט גבוהה יותר, כדי שהאחוז ייכנס לתוכה בנוח */
+.btrack--thin { height: 15px; }
+.btrack--thin .bbar { height: 15px; border-radius: 8px; }
+table.cmp .bpct { font-size: 9.5px; padding-inline-start: 6px; }
+
+.comparecard .emptynote { margin-top: 10px; }
+
+/* משפכים זה לצד זה. הם מצטמצמים לרוחב הזמין ונשברים לשורות
+   נוספות כשיש הרבה קמפיינים — בלי גלילה לרוחב. */
+/* רוחב הכרטיס קבוע — 260px, בדיוק רוחב ה-viewBox של המשפך.
+   זה מה שמחזיק את גודל האותיות יציב: כרטיס שנמתח לחצי מסך היה
+   מותח איתו גם את הטקסט. הרשת ממלאת כמה שנכנס בשורה וגולשת
+   לשורות נוספות — שמונה קמפיינים יוצאים שתי שורות מסודרות. */
+.funnelrow {
+  display: grid; gap: 12px; justify-content: start;
+  grid-template-columns: repeat(auto-fill, 260px);
+}
+.funnelmini { padding: 12px 11px 10px; }
+.funnelmini-head {
+  display: flex; align-items: center; gap: 7px; margin-bottom: 8px;
+}
+.funnelmini-name {
+  font-size: 12.5px; font-weight: 600; color: #eaf2ff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.funnelmini .cdot {
+  width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto;
+}
+svg.minifunnel { width: 100%; height: auto; display: block; }
+
+/* מקטע הענן במסך ההגדרות */
+.cloud-box { margin: 6px 0 16px; }
+.cloud-box .note { line-height: 1.75; }
+.cloud-box .warn, .cloud-box .ok, .cloud-box .err { margin-top: 12px; }
+
+/* --- מתי עודכן הענן --- */
+
+/* השורה הראשונה בכרטיס הענן עונה על השאלה היחידה שנשאלת כאן:
+   מה שרואים באוויר — זה מה שיש כאן? התאריך גדול כי הוא התשובה,
+   והפירוט מתחתיו קטן כי הוא רק ההוכחה. */
+.cloud-when {
+  background: #16233d; border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 12px;
+}
+.cloud-when-main { font-size: 15px; color: #cfe0f7; }
+.cloud-when-main b { color: #fff; font-variant-numeric: tabular-nums; }
+.cloud-when-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 5px; }
+
+/* קוד שעל הדיסק ואינו בענן. אדום, ולא צהוב: זה אינו "שים לב",
+   זה "מה שאתה מראה לאחרים אינו מה שבנית". */
+.cloud-stale {
+  background: rgba(249,115,98,.12); border: 1px solid var(--err);
+  border-inline-start: 4px solid var(--err); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 12px; color: #ffd7d1;
+  font-size: 13px; line-height: 1.75;
+}
+.cloud-stale b { color: #ff9e91; }
+
+/* --- ערך שהמערכת אינה מכירה, בתוך הטבלה עצמה (סעיף 3) --- */
+
+/* השורה נשתלת בטבלה עם הערך הגולמי כבר במקומו. היא אדומה כדי
+   שתימצא מיד גם בטבלה בת 1,575 שורות, והתא הראשון נעול — הערך
+   הגיע מהנתונים ואין לשנותו, רק לקבוע לו סיווג. */
+.rowmissing td { background: #2a1614; }
+.rowmissing input { border-color: var(--err); }
+.rowmissing input[readonly] {
+  background: #3a1e1a; color: #ffb4ab; font-weight: 600; cursor: default;
+}
+.rowmissing input:not([readonly]):focus { border-color: var(--accent); }
+
+.missing-note {
+  border: 1px solid var(--err); background: #2a1614; color: #ffd9d4;
+  border-radius: 9px; padding: 9px 12px; margin: 12px 0 8px;
+  font-size: 12.5px; line-height: 1.6;
+}
+
+/* צ'יפ של טבלה שממתינים לה ערכים */
+.tchip.needs { color: #ffb4ab; }
+.tchip-badge {
+  display: inline-block; margin-inline-start: 6px; padding: 0 6px;
+  border-radius: 999px; background: var(--err); color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 17px; min-width: 17px;
+  text-align: center;
+}
+
+
+/* ---------- שתי לוחיות באותה שורה ---------- */
+
+/* מקטע שיש לו מקום לשניים. טבלה של שלוש עמודות שנפרסה על כל
+   רוחב העמוד יצרה שדה ריק בין התווית למספר, ובזמן שלצדה היה
+   מקום פנוי לגמרי. כאן שני מקטעים — כל אחד עם הכותרת שלו —
+   יושבים זה לצד זה, ויורדים זה מתחת לזה כשאין רוחב לשניהם. */
+.duo {
+  /* min(…, 100%): במסך צר מ-430 (טלפון) העמודה היא רוחב המסך. בלי זה
+     כל מקטע נמתח ל-430 בכוח, והמשפך וכרטיס הפירוט נחתכו בשוליים. */
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(430px, 100%), 1fr));
+  gap: 0 18px; align-items: start;
+}
+.duo > section { min-width: 0; }
+.duo > section > h2:first-child { margin-top: 4px; }
+
+/* כרטיס שכל תוכנו טבלה צרה (עד ארבע עמודות) אינו נמתח על כל
+   רוחב העמוד. הרוחב נקבע לפי התוכן, עם תקרה — כך הטבלה נשארת
+   סימטרית והמקום שנשאר לצדה שמיש. */
+.card--slim { max-width: 760px; }
+.duo .card--slim { max-width: none; }
+
+/* ---------- מקרא צבעים מתחת לגרף ---------- */
+
+/* בגרף שיש בו כמה סדרות, השם לבדו אינו אומר איזו עמודה שייכת
+   למי. המקרא צמוד לגרף, מתחתיו, ובכל פריט הריבוע בצבע הסדרה. */
+/* המקרא נצמד לתחתית המלבן.
+
+   בכרטיסים שבשורה אחת יש כמות שורות שונה, ולכן המקרא הופיע בכל
+   כרטיס בגובה אחר — שלוש רצועות צבע במקומות מקריים לאורך השורה.
+   עכשיו הוא יושב בתחתית כל כרטיס, וכל המקראות שבשורה עומדים על
+   אותו קו.
+
+   הריבועים גם קטנו: 11 פיקסלים ומרווח 16 נתנו רצועה שגובהה
+   שתי שורות בחמישה קמפיינים, גדולה מכמה מהעמודות שמעליה. */
+.serieslegend {
+  display: flex; flex-wrap: wrap; gap: 3px 12px;
+  margin-top: auto; padding-top: 7px; border-top: 1px solid var(--line);
+  font-size: 11px; color: var(--ink-mid); line-height: 1.5;
+}
+.serieslegend-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-width: 0; max-width: 100%;
+}
+.serieslegend-item > span:last-child {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.serieslegend .swatch {
+  width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto;
+}
+
+/* כרטיס גרף הוא עמודה, כדי שיהיה למקרא לאן להיצמד */
+.barcard { display: flex; flex-direction: column; }
+
+/* גוש של ערך אחד — עמודה לכל קמפיין. קו דק סוגר את הגוש, ורווח
+   פותח את הבא, כדי ששתי קבוצות סמוכות לא ייראו כקבוצה אחת. */
+table.bars tr.cmp-first > td { padding-top: 7px; }
+table.bars tr.cmp-last > td { border-bottom: 1px solid rgba(255, 255, 255, .07); }
+
+/* שלושה קמפיינים ומעלה — אותו גרף, במידות מכווצות. הפרופורציות
+   אינן משתנות: רק גובה העמודה, הגופן ורוחב עמודת המספר. */
+.barstack--dense .bbar { height: 14px; }
+.barstack--dense table.bars td { padding: 1.5px 4px; }
+.barstack--dense td.blab { width: 120px; max-width: 120px; font-size: 11px; }
+.barstack--dense td.bval { width: 72px; font-size: 11px; }
+.barstack--dense .bpct, .barstack--dense .bpct--out { font-size: 10px; }
+.barstack--dense .bpct { padding-inline-start: 6px; }
+.barstack--dense tr.cmp-first > td { padding-top: 5px; }
+
+/* ---------- ציר הזמן בדף הראשי ---------- */
+
+/* ציר אופקי אחד: שם הקמפיין מימין, רצועת החודשים באמצע, סך
+   ההגשות משמאל. כל החודשים ברוחב שווה, ולכן המרחק על הציר הוא
+   מרחק בזמן — שני קמפיינים שרצו זה אחרי זה נראים כך, ושניים
+   שחפפו נראים זה מעל זה באותו טווח. */
+.tl { display: flex; flex-direction: column; gap: 3px; position: relative; }
+.tl-axis, .tl-lane {
+  display: grid; grid-template-columns: minmax(90px, 168px) 1fr 62px;
+  align-items: center; gap: 10px;
+}
+.tl-track {
+  display: grid; grid-template-columns: repeat(var(--tl-months, 12), minmax(0, 1fr));
+  gap: 1px; min-width: 0;
+}
+.tl-name {
+  font-size: 12px; font-weight: 600; color: #cfe0f7; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; text-align: right;
+}
+.tl-total {
+  font-size: 11.5px; color: var(--ink-mid); text-align: left;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* שורת החודשים. התווית מסובבת מעט, כי שם חודש עברי ושנה אינם
+   נכנסים לרוחב משבצת אחת בציר ארוך. */
+.tl-axis { margin-bottom: 5px; align-items: end; }
+.tl-axis .tl-total { color: #8ba0c4; font-weight: 600; }
+.tl-tick {
+  height: 30px; display: flex; align-items: flex-end; justify-content: center;
+  border-inline-end: 1px solid rgba(255, 255, 255, .05);
+}
+.tl-tick span {
+  font-size: 10px; color: #8ba0c4; white-space: nowrap;
+  transform: rotate(-38deg); transform-origin: bottom center;
+}
+
+/* רצועת קמפיין: משבצת לכל חודש, צבועה רק בטווח שבו הוא רץ */
+.tl-lane {
+  border-radius: 8px; padding: 3px 4px; transition: background .15s;
+}
+.tl-lane--go { cursor: pointer; }
+.tl-cell { height: 17px; background: transparent; }
+.tl-cell.tl-on { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }
+.tl-cell.tl-start { border-start-start-radius: 5px; border-end-start-radius: 5px; }
+.tl-cell.tl-end { border-start-end-radius: 5px; border-end-end-radius: 5px; }
+
+/* קמפיין בהליך מול קמפיין שהסתיים.
+
+   ההבדל נשען על שלושה דברים קטנים ולא על צבע: הרצועה גבוהה
+   יותר, הצבע מלא, ושם הקמפיין בהיר. הצבע עצמו שייך לקמפיין
+   ואינו פנוי לסימון מצב — הוא אותו צבע בכרטיס, בציר ובלוח
+   השנתי, וזה מה שמאפשר לעקוב אחרי קמפיין בין מסך למסך. */
+.tl-lane--live .tl-cell { height: 21px; }
+.tl-lane--live .tl-cell.tl-on {
+  opacity: 1 !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28);
+}
+.tl-lane--live .tl-name { color: #fff; font-weight: 700; }
+.tl-lane--live .tl-name::after {
+  content: ''; display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--cc, #22c39a);
+  margin-inline-start: 6px; vertical-align: middle;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc, #22c39a) 22%, transparent);
+}
+.tl-lane--done { opacity: .78; }
+.tl-lane--done:hover { opacity: 1; }
+
+/* הקו של היום.
+
+   בלעדיו אי אפשר לדעת אם רצועה נגמרה או שהיא פשוט מגיעה עד
+   עכשיו — וזו בדיוק ההבחנה בין קמפיין שהסתיים לקמפיין שרץ. */
+.tl-today {
+  position: absolute; bottom: 0; width: 0; pointer-events: none;
+  border-inline-start: 2px dashed rgba(255, 255, 255, .55); z-index: 2;
+}
+.tl-today-tag {
+  position: absolute; top: -17px; transform: translateX(-50%);
+  font-size: 9.5px; font-weight: 700; letter-spacing: .3px;
+  color: #0f1729; background: rgba(255, 255, 255, .82);
+  padding: 1px 6px; border-radius: 8px; white-space: nowrap;
+}
+
+/* ההדגשה ההדדית: ריחוף על הרצועה או על הכרטיס שמעליה מדליק את
+   שניהם יחד, כדי שהעין תמצא במבט מי הוא מי. */
+.tl-lane--hot { background: rgba(255, 255, 255, .07); }
+.tl-lane--hot .tl-name { color: #fff; }
+.tl-lane--hot .tl-cell.tl-on {
+  opacity: 1 !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35);
+}
+.tl-lane:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+@media (max-width: 900px) {
+  .tl-axis, .tl-lane { grid-template-columns: minmax(70px, 110px) 1fr 46px; gap: 6px; }
+  .tl-name { font-size: 11px; }
+  .tl-total { font-size: 10.5px; }
+  .tl-cell { height: 14px; }
+}
+
+/* ---------- קמפיין פעיל מול קמפיין שהסתיים ---------- */
+
+/* מה שעובדים עליו עכשיו חייב להיראות אחרת ממה שנגמר לפני שנה.
+   הפעיל מקבל פס ירוק, רקע מודגש ונקודה שנושמת; שהסתיים נשאר
+   כפי שהיה, רק עמום מעט — הוא עדיין נפתח ונקרא בדיוק כמו קודם. */
+/* לכל קמפיין צבע משלו, והוא אותו צבע בדיוק בציר הזמן שמתחת
+   ובכל גרף בלוח השנתי. הצבע נקבע ב-JavaScript (annualColor) כי
+   רק שם ידוע סדר הקמפיינים במטען השנתי. */
+a.camp { border-inline-start: 3px solid var(--cc, #33436b); }
+a.camp .cname .cdot {
+  width: 9px; height: 9px; margin-inline-end: 8px;
+  background: var(--cc, #4F8EF7);
+}
+a.camp--live {
+  border-color: color-mix(in srgb, var(--cc, #22c39a) 45%, #33436b);
+  border-inline-start: 3px solid var(--cc, #22c39a);
+  background: linear-gradient(120deg,
+              color-mix(in srgb, var(--cc, #22c39a) 12%, transparent),
+              var(--panel) 60%);
+}
+a.camp--live:hover {
+  border-color: var(--cc, #22c39a);
+  background: color-mix(in srgb, var(--cc, #22c39a) 16%, var(--panel));
+}
+a.camp--live .cname::after {
+  content: 'בהליך'; display: inline-block; margin-inline-start: 8px;
+  vertical-align: middle; font-size: 10px; font-weight: 700;
+  padding: 1px 8px; border-radius: 20px; letter-spacing: .2px;
+  color: var(--cc, #22c39a);
+  background: color-mix(in srgb, var(--cc, #22c39a) 16%, transparent);
+}
+a.camp--done { opacity: .86; }
+a.camp--done:hover { opacity: 1; }
+/* הכרטיס נדלק כשמרחפים על הרצועה שלו בציר הזמן שמתחת */
+a.camp--hot {
+  border-color: var(--accent); background: #20304f;
+  transform: translateY(-2px); opacity: 1;
+}
+h2.h2--live { border-right-color: #22c39a; color: #9ce7cd; }
+
+/* ---------- בורר ייצוא המצגת בלוח הראשי ---------- */
+/* טופס GET רגיל אל /export/deck. יושב בין רשימת הקמפיינים לציר
+   הזמן, ולכן הוא לבוש ככרטיס — אחרת הוא נראה כשורת טופס תלושה. */
+.deckpick {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 13px 16px; margin: 18px 0 4px;
+}
+.deckpick-row {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  margin-top: 8px;
+}
+.deckpick select.inline { min-width: 260px; }
+
+/* ---------- הודעה צפה ---------- */
+/* בענן אין שרת שיציג עמוד שגיאה, ולכן כישלון הורדה נאמר כאן. */
+.cc-toast {
+  position: fixed; inset-inline: 0; bottom: 18px; margin: 0 auto;
+  max-width: 520px; width: fit-content; z-index: 60;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 16px; color: var(--ink);
+  font-size: 13px; box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: opacity .18s, transform .18s;
+}
+.cc-toast.on { opacity: 1; transform: translateY(0); }
+
+/* ---------- קופסת ההתחברות לענן ---------- */
+.cloud-login { margin-top: 10px; }
+.cloud-login p { margin: 8px 0; }
+.cloud-login form { display: inline-block; margin-inline-end: 10px; }
+/* כתובת ההתחברות ארוכה מאוד — היא נשברת ואינה מותחת את העמוד */
+code.wrap {
+  display: inline-block; max-width: 100%; word-break: break-all;
+  white-space: normal; line-height: 1.5;
+}
+
+/* טבלה רחבה (הצלחה לפי מודעה): גלילה לרוחב בתוך הכרטיס, ולא בעמוד כולו */
+.tscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tscroll table.t { min-width: 760px; }
+
+/* המרות בדיגיטל מול הגשות (07/10/2026): פחות המרות מהגשות — אדום */
+td.conv-short { color: var(--err); font-weight: 700; background: rgba(249,115,98,.14); }
+tr.conv-short-row td:first-child { color: var(--err); font-weight: 700; }
+.tile.tile--short { border-color: var(--err); }
+.tile.tile--short .val, .tile.tile--short .foot { color: var(--err); }
+.insight.insight--short { border-color: var(--err); background: rgba(249,115,98,.10); }
+.insight.insight--short b { color: var(--err); }
+
+.demo-banner {
+  background: #3a2b16; border-bottom: 1px solid #7a5a25; color: #f0d9a8;
+  padding: 10px 16px; font-size: 12.5px; text-align: center; line-height: 1.6;
+}
+</style>
+<script src="data/bundle.js"></script>
+<script src="assets/dashboard.js?v=384fce5b60" defer></script>
+</head>
+<body>
+<div class="demo-banner">
+  🔒 <b>נתוני דמה — מומצאים מאפס, שנת 2030, ללא קשר למציאות.</b>
+  המספרים אינם משקפים נתוני אמת, ואין באתר שום פרט מזהה.
+  ההגדרות וטעינת הנתונים קיימות רק בגרסת השרת הפנימית.
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">ק</div>
+      <div class="brand-text">
+        <strong>מערכת לניהול קמפיינים</strong>
+        <span>הדגמה · נתוני דמה</span>
+      </div>
+    </div>
+    <nav class="side-nav"><a class="on" href="index.html"><span class="ico">▦</span><span>קמפיינים</span></a><a class="" href="annual.html"><span class="ico">◱</span><span>לוח בקרה שנתי</span></a></nav>
+    <div class="side-foot">
+      אתר הדגמה · נתונים מוגרלים.<br>
+      ההגדרות וטעינת הנתונים בגרסת השרת בלבד.
+    </div>
+  </aside>
+
+  <div class="main">
+    <header>
+      <div class="head-row">
+        <div class="head-main">
+          <div class="camp-head">
+            <div class="ctitle" id="demo-title">מערכת לניהול קמפיינים</div>
+            <div class="csub" id="demo-sub">הדגמה</div>
+            <div class="cdates" id="demo-range"></div>
+          </div>
+        </div>
+        <div class="head-actions">
+          <select class="inline" id="demo-campaign"><option value="קמפיין סיור">קמפיין סיור</option><option value="קמפיין חקירות">קמפיין חקירות</option><option value="קמפיין בילוש">קמפיין בילוש</option><option value="קמפיין מג"ב">קמפיין מג"ב</option></select>
+        </div>
+      </div>
+    </header>
+
+    <div class="nav"><a class="" href="index.html">הגשות לפי ימים</a><a class="" href="funnel.html">משפך הגיוס</a><a class="" href="map.html">מפת הגשות</a><a class="" href="profile.html">פרופיל דמוגרפי</a><a class="" href="performance.html">ביצועי קמפיין ופלטפורמות</a><a class="on" href="ads.html">הצלחה לפי מודעה</a><a class="" href="comparison.html">השוואה לקמפיינים קודמים</a><a class="" href="reason.html">סיבה להפסקת הליך</a></div>
+    <div class="wrap">
+      <div id="cc-root" data-campaign="קמפיין סיור"></div>
+      <div id="cc-ctl"></div><input type="checkbox" id="cc-drawer-toggle" hidden><div class="drawer" id="cc-drawer"><div class="fbox" id="cc-filters"></div></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var box = document.getElementById('cc-drawer-toggle');
+  var drawer = document.getElementById('cc-drawer');
+  if (!box || !drawer) return;
+  box.addEventListener('change', function () {
+    drawer.classList.toggle('open', box.checked);
+  });
+});
+</script>
+
+      
+      <h2>הצלחה לפי מודעה — סיכום</h2>
+      <div class="kpis" id="cc-adsuccess-kpis"></div>
+      <h2>המרות בדיגיטל מול הגשות במערכת</h2>
+      <div id="cc-adsuccess-conv"></div>
+      <h2>שיעור הצלחה לפי מודעה</h2>
+      <div id="cc-adsuccess-bars"></div>
+      <h2>המשפך של כל מודעה</h2>
+      <div id="cc-adsuccess-table"></div></div>
+
+    <footer>אתר הדגמה בלבד · נתונים מוגרלים · ללא כל פרט מזהה</footer>
+  </div>
+</div>
+
+<script>
+window.CC_STATIC = {"campaigns": [{"id": "קמפיין סיור", "name": "קמפיין סיור", "subtitle": "גיוס סיירים — נתוני דמה", "range": "06/01/2030 – 17/02/2030", "file": "c0.json"}, {"id": "קמפיין חקירות", "name": "קמפיין חקירות", "subtitle": "גיוס חוקרים — נתוני דמה", "range": "03/03/2030 – 10/04/2030", "file": "c1.json"}, {"id": "קמפיין בילוש", "name": "קמפיין בילוש", "subtitle": "גיוס בלשים — נתוני דמה", "range": "05/05/2030 – 09/06/2030", "file": "c2.json"}, {"id": "קמפיין מג\"ב", "name": "קמפיין מג\"ב", "subtitle": "גיוס לוחמי מג\"ב — נתוני דמה", "range": "07/07/2030 – 21/08/2030", "file": "c3.json"}]};
+
+document.addEventListener('DOMContentLoaded', function () {
+  var box = document.getElementById('cc-drawer-toggle');
+  var drawer = document.getElementById('cc-drawer');
+  if (box && drawer) {
+    box.addEventListener('change', function () {
+      drawer.classList.toggle('open', box.checked);
+    });
+  }
+
+  var picker = document.getElementById('demo-campaign');
+  var saved = localStorage.getItem('cc-demo-campaign');
+  if (saved && [].some.call(picker.options, function (o) { return o.value === saved; })) {
+    picker.value = saved;
+  }
+
+  function head(id) {
+    var entry = window.CC_STATIC.campaigns.find(function (c) { return c.id === id; });
+    document.getElementById('demo-title').textContent = entry.name;
+    document.getElementById('demo-sub').textContent = entry.subtitle;
+    document.getElementById('demo-range').textContent = entry.range;
+    var root = document.getElementById('cc-root');
+    if (root) root.dataset.campaign = id;
+  }
+  picker.addEventListener('change', function () {
+    localStorage.setItem('cc-demo-campaign', picker.value);
+    head(picker.value);
+    if (window.loadCampaign) loadCampaign(picker.value);
+  });
+  head(picker.value);
+});
+</script>
+</body>
+</html>
