@@ -975,16 +975,45 @@ function barRow(label, widthRatio, share, valueText, color) {
    מחשב פריסה פעם אחת בלבד: קודם נאספות כל המידות, ורק אחר כך
    מתבצעים השינויים. */
 function fitBarLabels(root) {
+  /* השמורה שנוספת בסוף כל מעבר מקצרת את כל העמודות בגרף — ותווית
+     שנכנסה בדיוק לפני כן כבר אינה נכנסת (בלוח השנתי: "6.0%" שנחתך
+     ל-"0%", 11/10/2026). לכן חוזרים עד שאף תווית אינה זזה. */
+  for (let pass = 0; pass < 4; pass++) {
+    if (!fitBarLabelsPass(root)) return;
+  }
+}
+
+/* המדידה נעשית ברגע הציור — לפעמים לפני שהגופן נטען או לפני שהעמוד
+   הגיע לרוחבו הסופי, ואז תווית "נכנסה" לעמודה שבסוף צרה ממנה
+   (11/10/2026). המדידה חוזרת אחרי טעינת הגופנים, בטעינת העמוד ובכל
+   שינוי רוחב. היא נוגעת רק בתוויות שבתוך העמודה ואינן נכנסות, ולכן
+   הרצה חוזרת בטוחה וזולה. */
+(function watchBarLabels() {
+  let pending = 0;
+  const again = () => {
+    cancelAnimationFrame(pending);
+    pending = requestAnimationFrame(() => fitBarLabels());
+  };
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(again);
+  window.addEventListener('load', again);
+  if (window.ResizeObserver) {
+    const start = () => new ResizeObserver(again).observe(document.body);
+    if (document.body) start();
+    else document.addEventListener('DOMContentLoaded', start);
+  }
+})();
+
+function fitBarLabelsPass(root) {
   const scope = root || document;
   const tags = scope.querySelectorAll('.bbar > .bpct');
-  if (!tags.length) return;
+  if (!tags.length) return false;
 
   const move = [];
   tags.forEach(tag => {
     const bar = tag.parentNode;
     if (tag.scrollWidth + 12 > bar.clientWidth) move.push(tag);
   });
-  if (!move.length) return;
+  if (!move.length) return false;
 
   /* שמורה בסוף כל מסילה, ברוחב התווית החיצונית הרחבה ביותר
      שבאותו גרף.
@@ -998,7 +1027,9 @@ function fitBarLabels(root) {
   move.forEach(tag => {
     const chart = tag.closest('table.bars');
     if (!chart) return;
-    widest.set(chart, Math.max(widest.get(chart) || 0, tag.scrollWidth));
+    // השמורה ממעבר קודם אינה מתקצרת — רק גדלה אם צריך
+    const before = parseFloat(chart.style.getPropertyValue('--outgutter')) - 8 || 0;
+    widest.set(chart, Math.max(widest.get(chart) || 0, before, tag.scrollWidth));
   });
 
   move.forEach(tag => {
@@ -1012,6 +1043,7 @@ function fitBarLabels(root) {
     chart.style.setProperty('--outgutter', Math.ceil(width + 8) + 'px');
     chart.classList.add('bars--outfit');
   });
+  return true;
 }
 
 /* מסדר כל טבלה שנוצרה בצד הלקוח, במעבר אחד אחרי הציור.

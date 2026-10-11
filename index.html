@@ -2,9 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>הגשות לפי ימים — מערכת לניהול קמפיינים (נתוני דמה)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0f1729">
+<meta name="mobile-web-app-capable" content="yes">
+<title>קמפיינים — מערכת לניהול קמפיינים</title>
 <link rel="icon" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
 <style>:root {
   --bg: #0f1729;
   --panel: #1a2440;
@@ -1446,7 +1450,9 @@ table.cmp .bpct { font-size: 9.5px; padding-inline-start: 6px; }
    מותח איתו גם את הטקסט. הרשת ממלאת כמה שנכנס בשורה וגולשת
    לשורות נוספות — שמונה קמפיינים יוצאים שתי שורות מסודרות. */
 .funnelrow {
-  display: grid; gap: 12px; justify-content: start;
+  /* במרכז ולא בצד: שלושה משפכים בצד ימין השאירו את כל צד שמאל
+     של הלוח השנתי ריק (11/10/2026) */
+  display: grid; gap: 12px; justify-content: center;
   grid-template-columns: repeat(auto-fill, 260px);
 }
 .funnelmini { padding: 12px 11px 10px; }
@@ -1772,21 +1778,32 @@ tr.conv-short-row td:first-child { color: var(--err); font-weight: 700; }
 .insight.insight--short { border-color: var(--err); background: rgba(249,115,98,.10); }
 .insight.insight--short b { color: var(--err); }
 
+/* גרף המגמה בטלפון (11/10/2026): ה-SVG התכווץ לרוחב המסך, והתוויות
+   והמספרים יצאו בגודל שאי אפשר לקרוא. במסך צר הגרף שומר על רוחב
+   מינימלי, והכרטיס נגלל לרוחב — כמו הטבלאות הרחבות. */
+@media (max-width: 620px) {
+  .trendcard { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .trendcard .tsvg { min-width: 680px; }
+}
+
 .demo-banner {
   background: #3a2b16; border-bottom: 1px solid #7a5a25; color: #f0d9a8;
-  padding: 10px 16px; font-size: 12.5px; text-align: center; line-height: 1.6;
+  padding: 8px 16px; font-size: 12.5px; text-align: center; line-height: 1.6;
+}
+.demo-bang {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 17px; height: 17px; border-radius: 50%; margin-inline-end: 4px;
+  background: #f59e0b; color: #111827; font-weight: 800; font-size: 12px;
+  vertical-align: 1px;
 }
 </style>
-<script src="data/bundle.js"></script>
-<script src="assets/dashboard.js?v=384fce5b60" defer></script>
+<script>window.CC_STATIC = { campaigns: [{"id": "קמפיין סיור", "name": "קמפיין סיור", "subtitle": "גיוס סיירים — נתוני דמה", "range": "06/01/2030 – 17/02/2030", "live": false, "file": "c0.json"}, {"id": "קמפיין חקירות", "name": "קמפיין חקירות", "subtitle": "גיוס חוקרים — נתוני דמה", "range": "03/03/2030 – 10/04/2030", "live": false, "file": "c1.json"}, {"id": "קמפיין בילוש", "name": "קמפיין בילוש", "subtitle": "גיוס בלשים — נתוני דמה", "range": "05/05/2030 – 09/06/2030", "live": true, "file": "c2.json"}, {"id": "קמפיין מג\"ב", "name": "קמפיין מג\"ב", "subtitle": "גיוס לוחמי מג\"ב — נתוני דמה", "range": "07/07/2030 – 21/08/2030", "live": true, "file": "c3.json"}] };</script>
+<script src="data/bundle.js?v=f480e58937"></script>
+<script src="assets/dashboard.js?v=f480e58937" defer></script>
+<script src="assets/demo.js?v=f480e58937" defer></script>
 </head>
 <body>
-<div class="demo-banner">
-  🔒 <b>נתוני דמה — מומצאים מאפס, שנת 2030, ללא קשר למציאות.</b>
-  המספרים אינם משקפים נתוני אמת, ואין באתר שום פרט מזהה.
-  ההגדרות וטעינת הנתונים קיימות רק בגרסת השרת הפנימית.
-</div>
-
+<div class="demo-banner">🔒 <b>נתוני דמה</b> — מומצאים מאפס, שנת 2030, ללא קשר למציאות.</div>
 <div class="layout">
   <aside class="sidebar">
     <div class="brand">
@@ -1797,10 +1814,6 @@ tr.conv-short-row td:first-child { color: var(--err); font-weight: 700; }
       </div>
     </div>
     <nav class="side-nav"><a class="on" href="index.html"><span class="ico">▦</span><span>קמפיינים</span></a><a class="" href="annual.html"><span class="ico">◱</span><span>לוח בקרה שנתי</span></a></nav>
-    <div class="side-foot">
-      אתר הדגמה · נתונים מוגרלים.<br>
-      ההגדרות וטעינת הנתונים בגרסת השרת בלבד.
-    </div>
   </aside>
 
   <div class="main">
@@ -1809,75 +1822,47 @@ tr.conv-short-row td:first-child { color: var(--err); font-weight: 700; }
         <div class="head-main">
           <div class="camp-head">
             <div class="ctitle" id="demo-title">מערכת לניהול קמפיינים</div>
-            <div class="csub" id="demo-sub">הדגמה</div>
+            <div class="csub" id="demo-sub">4 קמפיינים במערכת</div>
             <div class="cdates" id="demo-range"></div>
           </div>
         </div>
-        <div class="head-actions">
-          <select class="inline" id="demo-campaign"><option value="קמפיין סיור">קמפיין סיור</option><option value="קמפיין חקירות">קמפיין חקירות</option><option value="קמפיין בילוש">קמפיין בילוש</option><option value="קמפיין מג"ב">קמפיין מג"ב</option></select>
-        </div>
+        
       </div>
     </header>
 
-    <div class="nav"><a class="on" href="index.html">הגשות לפי ימים</a><a class="" href="funnel.html">משפך הגיוס</a><a class="" href="map.html">מפת הגשות</a><a class="" href="profile.html">פרופיל דמוגרפי</a><a class="" href="performance.html">ביצועי קמפיין ופלטפורמות</a><a class="" href="ads.html">הצלחה לפי מודעה</a><a class="" href="comparison.html">השוואה לקמפיינים קודמים</a><a class="" href="reason.html">סיבה להפסקת הליך</a></div>
+    
     <div class="wrap">
-      <div id="cc-root" data-campaign="קמפיין סיור"></div>
-      <div id="cc-ctl"></div><input type="checkbox" id="cc-drawer-toggle" hidden><div class="drawer" id="cc-drawer"><div class="fbox" id="cc-filters"></div></div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  var box = document.getElementById('cc-drawer-toggle');
-  var drawer = document.getElementById('cc-drawer');
-  if (!box || !drawer) return;
-  box.addEventListener('change', function () {
-    drawer.classList.toggle('open', box.checked);
-  });
-});
-</script>
-
-      
-      <h2>לידים יומיים — מגמה לאורך הקמפיין</h2>
-      <div class="kpis" id="cc-daily-kpis"></div>
-      <h2>הגשות לפי שבוע קמפיין</h2>
-      <div id="cc-weekly"></div>
-      <h2>הגשות לפי יום בשבוע</h2>
-      <div class="barstack" id="cc-daily-charts"></div>
-      <h2>מגמה יומית</h2>
-      <div id="cc-trend"></div>
-      <h2>פירוט יומי</h2>
-      <div id="cc-daily-table"></div></div>
-
-    <footer>אתר הדגמה בלבד · נתונים מוגרלים · ללא כל פרט מזהה</footer>
+      <div id="cc-home" data-home="1"></div>
+      <div class="kpis" id="cc-home-kpis"></div>
+      <div id="cc-home-cards"></div>
+      <div id="cc-home-months"></div>
+      <h2>מגמת ההגשות</h2>
+      <div id="cc-annual-trend"></div></div>
   </div>
 </div>
-
 <script>
-window.CC_STATIC = {"campaigns": [{"id": "קמפיין סיור", "name": "קמפיין סיור", "subtitle": "גיוס סיירים — נתוני דמה", "range": "06/01/2030 – 17/02/2030", "file": "c0.json"}, {"id": "קמפיין חקירות", "name": "קמפיין חקירות", "subtitle": "גיוס חוקרים — נתוני דמה", "range": "03/03/2030 – 10/04/2030", "file": "c1.json"}, {"id": "קמפיין בילוש", "name": "קמפיין בילוש", "subtitle": "גיוס בלשים — נתוני דמה", "range": "05/05/2030 – 09/06/2030", "file": "c2.json"}, {"id": "קמפיין מג\"ב", "name": "קמפיין מג\"ב", "subtitle": "גיוס לוחמי מג\"ב — נתוני דמה", "range": "07/07/2030 – 21/08/2030", "file": "c3.json"}]};
-
 document.addEventListener('DOMContentLoaded', function () {
-  var box = document.getElementById('cc-drawer-toggle');
-  var drawer = document.getElementById('cc-drawer');
-  if (box && drawer) {
-    box.addEventListener('change', function () {
-      drawer.classList.toggle('open', box.checked);
-    });
-  }
-
   var picker = document.getElementById('demo-campaign');
-  var saved = localStorage.getItem('cc-demo-campaign');
-  if (saved && [].some.call(picker.options, function (o) { return o.value === saved; })) {
-    picker.value = saved;
-  }
+  if (!picker) return;
+  var saved = localStorage.getItem('cc-cloud-campaign');
+  if (saved && [].some.call(picker.options, function (o) {
+    return o.value === saved;
+  })) { picker.value = saved; }
 
   function head(id) {
-    var entry = window.CC_STATIC.campaigns.find(function (c) { return c.id === id; });
+    var entry = (window.CC_STATIC.campaigns || []).find(function (c) {
+      return c.id === id;
+    });
+    if (!entry) return;
     document.getElementById('demo-title').textContent = entry.name;
-    document.getElementById('demo-sub').textContent = entry.subtitle;
-    document.getElementById('demo-range').textContent = entry.range;
+    document.getElementById('demo-sub').textContent = entry.subtitle || '';
+    var range = document.getElementById('demo-range');
+    if (range) range.textContent = entry.range || '';
     var root = document.getElementById('cc-root');
     if (root) root.dataset.campaign = id;
   }
   picker.addEventListener('change', function () {
-    localStorage.setItem('cc-demo-campaign', picker.value);
+    localStorage.setItem('cc-cloud-campaign', picker.value);
     head(picker.value);
     if (window.loadCampaign) loadCampaign(picker.value);
   });
