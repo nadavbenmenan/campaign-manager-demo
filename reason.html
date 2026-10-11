@@ -1797,10 +1797,28 @@ tr.conv-short-row td:first-child { color: var(--err); font-weight: 700; }
   vertical-align: 1px;
 }
 </style>
-<script>window.CC_STATIC = { campaigns: [{"id": "קמפיין סיור", "name": "קמפיין סיור", "subtitle": "גיוס סיירים — נתוני דמה", "range": "06/01/2030 – 17/02/2030", "live": false, "file": "c0.json"}, {"id": "קמפיין חקירות", "name": "קמפיין חקירות", "subtitle": "גיוס חוקרים — נתוני דמה", "range": "03/03/2030 – 10/04/2030", "live": false, "file": "c1.json"}, {"id": "קמפיין בילוש", "name": "קמפיין בילוש", "subtitle": "גיוס בלשים — נתוני דמה", "range": "05/05/2030 – 09/06/2030", "live": true, "file": "c2.json"}, {"id": "קמפיין מג\"ב", "name": "קמפיין מג\"ב", "subtitle": "גיוס לוחמי מג\"ב — נתוני דמה", "range": "07/07/2030 – 21/08/2030", "live": true, "file": "c3.json"}] };</script>
-<script src="data/bundle.js?v=f480e58937"></script>
-<script src="assets/dashboard.js?v=f480e58937" defer></script>
-<script src="assets/demo.js?v=f480e58937" defer></script>
+<script>(function () {
+  var Real = Date;
+  var now = new Real();
+  var shifted = new Real(now.getTime());
+  shifted.setFullYear(2030);
+  var offset = shifted.getTime() - now.getTime();
+  function DemoDate() {
+    if (!(this instanceof DemoDate)) return new Real(Real.now() + offset).toString();
+    var args = [].slice.call(arguments);
+    return args.length ? new (Function.prototype.bind.apply(Real, [null].concat(args)))()
+                       : new Real(Real.now() + offset);
+  }
+  DemoDate.prototype = Real.prototype;
+  DemoDate.now = function () { return Real.now() + offset; };
+  DemoDate.parse = Real.parse;
+  DemoDate.UTC = Real.UTC;
+  window.Date = DemoDate;
+})();</script>
+<script>window.CC_STATIC = { campaigns: [{"id": "קמפיין סיור", "name": "קמפיין סיור", "subtitle": "גיוס סיירים — נתוני דמה", "range": "05/01/2030 – 30/11/2030", "live": true, "file": "c0.json"}, {"id": "קמפיין חקירות", "name": "קמפיין חקירות", "subtitle": "גיוס חוקרים — נתוני דמה", "range": "16/02/2030 – 30/06/2030", "live": false, "file": "c1.json"}, {"id": "קמפיין בילוש", "name": "קמפיין בילוש", "subtitle": "גיוס בלשים — נתוני דמה", "range": "01/05/2030 – 31/01/2031", "live": true, "file": "c2.json"}, {"id": "קמפיין מג\"ב", "name": "קמפיין מג\"ב", "subtitle": "גיוס לוחמי מג\"ב — נתוני דמה", "range": "15/07/2030 – 31/12/2030", "live": true, "file": "c3.json"}] };</script>
+<script src="data/bundle.js?v=c5e7b307f5"></script>
+<script src="assets/dashboard.js?v=c5e7b307f5" defer></script>
+<script src="assets/demo.js?v=c5e7b307f5" defer></script>
 </head>
 <body>
 <div class="demo-banner">🔒 <b>נתוני דמה</b> — מומצאים מאפס, שנת 2030, ללא קשר למציאות.</div>
@@ -1826,7 +1844,7 @@ tr.conv-short-row td:first-child { color: var(--err); font-weight: 700; }
             <div class="cdates" id="demo-range"></div>
           </div>
         </div>
-        <div class="head-actions"><select class="inline" id="demo-campaign"><optgroup label="קמפיינים פעילים"><option value="קמפיין בילוש">קמפיין בילוש</option><option value="קמפיין מג&quot;ב">קמפיין מג&quot;ב</option></optgroup><optgroup label="קמפיינים שהסתיימו"><option value="קמפיין סיור">קמפיין סיור</option><option value="קמפיין חקירות">קמפיין חקירות</option></optgroup></select></div>
+        <div class="head-actions"><select class="inline" id="demo-campaign"><optgroup label="קמפיינים פעילים"><option value="קמפיין סיור">קמפיין סיור</option><option value="קמפיין בילוש">קמפיין בילוש</option><option value="קמפיין מג&quot;ב">קמפיין מג&quot;ב</option></optgroup><optgroup label="קמפיינים שהסתיימו"><option value="קמפיין חקירות">קמפיין חקירות</option></optgroup></select></div>
       </div>
     </header>
 
